@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1600px; height:937px; }
+  body {
+    font-family:"Noto Sans","DejaVu Sans",sans-serif;
+    background:
+      radial-gradient(1200px 800px at 78% 42%, #101a33 0%, rgba(16,26,51,0) 60%),
+      linear-gradient(135deg,#0a0f1e 0%,#0b1122 55%,#090d19 100%);
+    color:#fff; position:relative; overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* subtle dot grid */
+  .grid { position:absolute; inset:0;
+    background-image:radial-gradient(rgba(255,255,255,.05) 1.3px, transparent 1.3px);
+    background-size:34px 34px; background-position:6px 6px; }
+  .stage { position:absolute; inset:0; }
+  .abs { position:absolute; }
+
+  /* ---- left column ---- */
+  .wordmark { left:60px; top:196px; font-size:112px; font-weight:800; letter-spacing:-4px; line-height:1; }
+  .subtitle { left:64px; top:336px; font-size:34px; font-weight:600; line-height:1.28; }
+  .subtitle .c { color:#3fd8ee; }
+  .subtitle .w { color:#e8edf6; }
+
+  .qpill { left:330px; top:498px; width:210px; height:88px; border-radius:20px;
+    background:#0e162b; border:1px solid #2b3a5c;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    font-size:20px; font-weight:700; color:#eaf0fb; box-shadow:0 6px 24px rgba(0,0,0,.35); }
+  .ghost { left:64px; top:498px; width:210px; height:88px; border-radius:20px;
+    border:1px solid #1c2740; background:rgba(255,255,255,.012); }
+
+  .brand { left:64px; top:792px; font-size:30px; font-weight:800; letter-spacing:-.5px; }
+  .roster { left:64px; top:838px; font-size:20px; font-weight:600; color:#9fb0c9; letter-spacing:.2px; }
+  .roster b { color:#3fd8ee; font-weight:700; }
+
+  /* ---- center model pills ---- */
+  .pill { left:690px; width:330px; height:74px; border-radius:22px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:27px; font-weight:700; letter-spacing:-.3px; }
+
+  /* ---- right column : three modes ---- */
+  .modehdr { left:1140px; top:150px; font-size:19px; font-weight:800; letter-spacing:3px; color:#3fd8ee; }
+  .card { left:1140px; width:404px; height:150px; border-radius:20px;
+    background:linear-gradient(180deg,#111a30 0%,#0d1424 100%);
+    border:1px solid #223250; padding:22px 26px;
+    box-shadow:0 10px 30px rgba(0,0,0,.28); }
+  .card .t { font-size:27px; font-weight:800; letter-spacing:-.3px; display:flex; align-items:center; gap:12px; }
+  .card .d { margin-top:12px; font-size:20px; font-weight:500; color:#aab9d2; line-height:1.32; }
+  .dot { width:14px; height:14px; border-radius:50%; display:inline-block; }
+  .foot { left:1140px; top:812px; font-size:19px; font-weight:600; color:#8092ad; }
+  .foot span { color:#c9d5e8; }
+</style>
+</head>
+<body>
+  <div class="grid"></div>
+
+  <!-- arrows: question pill -> each model pill -->
+  <svg class="stage" viewBox="0 0 1600 937" fill="none">
+    <defs>
+      <marker id="ah" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto">
+        <path d="M0,0 L7,3 L0,6" fill="none" stroke="#d7e2f2" stroke-width="1.4"/>
+      </marker>
+    </defs>
+    <g stroke="#c3d1e6" stroke-width="2.1" marker-end="url(#ah)" opacity=".9">
+      <line x1="556" y1="542" x2="676" y2="187"/>
+      <line x1="556" y1="542" x2="676" y2="281"/>
+      <line x1="556" y1="542" x2="676" y2="375"/>
+      <line x1="556" y1="542" x2="676" y2="469"/>
+      <line x1="556" y1="542" x2="676" y2="563"/>
+      <line x1="556" y1="542" x2="676" y2="657"/>
+      <line x1="556" y1="542" x2="676" y2="751"/>
+    </g>
+  </svg>
+
+  <!-- left -->
+  <div class="abs wordmark">ask-fable</div>
+  <div class="abs subtitle"><span class="c">Gated MCP</span> <span class="w">server for</span><br><span class="w">external reasoning</span></div>
+  <div class="abs ghost"></div>
+  <div class="abs qpill">Your agent's<br>question</div>
+  <div class="abs brand">ask-fable</div>
+  <div class="abs roster">Fable · MiniMax · Gemini · <b>GPT-5.6 Sol</b> · GLM · DeepSeek · Ollama</div>
+
+  <!-- center pills -->
+  <div class="abs pill" style="top:150px; background:linear-gradient(180deg,#2ee0f5,#1cc4e0); color:#053041; box-shadow:0 0 44px rgba(45,212,238,.42);">claude-fable-5-1</div>
+  <div class="abs pill" style="top:244px; background:linear-gradient(180deg,#8768ff,#6f4ff2); color:#fff; box-shadow:0 0 44px rgba(124,92,255,.40);">MiniMax-M3</div>
+  <div class="abs pill" style="top:338px; background:linear-gradient(180deg,#efa14e,#e2872f); color:#3a1e05; box-shadow:0 0 44px rgba(232,150,63,.38);">Gemini 3.1 Pro</div>
+  <div class="abs pill" style="top:432px; background:linear-gradient(180deg,#16b892,#0e9a7f); color:#ffffff; box-shadow:0 0 46px rgba(16,163,127,.46);">GPT-5.6 Sol</div>
+  <div class="abs pill" style="top:526px; background:linear-gradient(180deg,#2bb265,#1c964f); color:#fff; box-shadow:0 0 44px rgba(34,169,78,.38);">GLM-5.2</div>
+  <div class="abs pill" style="top:620px; background:linear-gradient(180deg,#e97a92,#df6079); color:#fff; box-shadow:0 0 44px rgba(224,96,126,.38);">deepseek-v4-pro</div>
+  <div class="abs pill" style="top:714px; background:linear-gradient(180deg,#3a8cee,#2f7de8); color:#fff; box-shadow:0 0 44px rgba(47,125,232,.40);">Ollama Cloud</div>
+
+  <!-- right: three modes -->
+  <div class="abs modehdr">THREE MODES</div>
+  <div class="abs card" style="top:196px;">
+    <div class="t"><span class="dot" style="background:#2ee0f5;"></span>Council</div>
+    <div class="d">Ask many in parallel →<br>Fable synthesizes one answer</div>
+  </div>
+  <div class="abs card" style="top:372px;">
+    <div class="t"><span class="dot" style="background:#e8963f;"></span>Chain</div>
+    <div class="d">Ordered relay — each stage<br>refines &amp; critiques the last</div>
+  </div>
+  <div class="abs card" style="top:548px;">
+    <div class="t"><span class="dot" style="background:#16b892;"></span>Debate</div>
+    <div class="d">Two models argue a ledger →<br>Fable adjudicates the merits</div>
+  </div>
+  <div class="abs foot">guard · <span>consensus · drift · resolution</span></div>
+</body>
+</html>

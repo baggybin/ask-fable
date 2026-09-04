@@ -1,0 +1,39 @@
+[project]
+name = "ask-fable"
+version = "0.12.0"
+description = "A gated MCP tool for requesting Fable reasoning — plus a multi-model council (Fable, MiniMax, Gemini, GLM, DeepSeek) — from Claude Code / opencode."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "baggybin" }]
+keywords = ["mcp", "claude", "fable", "reasoning", "agents"]
+dependencies = [
+    "mcp>=1.0,<2",
+    "claude-agent-sdk>=0.2,<0.3",
+]
+
+# NOTE: salient-core is deliberately NOT declared as an extra — it is unpublished,
+# and uv resolves all extras when locking, so declaring it breaks `uv run`/`uv sync`
+# for everyone. The guard imports it opportunistically at runtime when present.
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff"]
+
+[project.scripts]
+ask-fable = "ask_fable.__main__:_main"
+
+[build-system]
+requires = ["setuptools>=77.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["F", "B", "C4", "I", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

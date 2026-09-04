@@ -1,0 +1,19 @@
+graph TD
+    Start["def ask_chain(Q, pipeline):"] --> Init["history = []<br>draft = None"]
+    Init --> Loop["for stage in pipeline:"]
+    Loop --> IsFirst{"stage == pipeline[0]?"}
+    IsFirst -- Yes --> Draft["draft = call_oracle(stage, Q)<br>history.push(draft)"]
+    IsFirst -- No --> Critique["prompt = Q + anonymize(history)<br>draft = call_oracle(stage, prompt)<br>history.push(draft)"]
+    Draft --> CheckFail["if draft.failed:<br>  continue (skip stage)"]
+    Critique --> CheckFail
+    CheckFail --> LoopEnd{"More Stages?"}
+    LoopEnd -- Yes --> Loop
+    LoopEnd -- No --> FinalCheck{"final_stage.failed?"}
+    FinalCheck -- Yes --> Fallback["final_draft = synthesize(history, claude)"]
+    FinalCheck -- No --> SetFinal["final_draft = history[-1]"]
+    Fallback --> Drift["drift = compute_drift(history)"]
+    SetFinal --> Drift
+    Drift --> Ret["return final_draft, drift, history"]
+
+    classDef func fill:#f9f,stroke:#333,stroke-width:2px;
+    class Start func;

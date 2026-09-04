@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ask-fable · architecture</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  img { max-width: 100%; }
+  :root {
+    --ground: #0b0e14;
+    --panel: #12161f;
+    --panel-2: #171c27;
+    --panel-3: #1d2431;
+    --line: #29313f;
+    --line-soft: #1f2632;
+    --ink: #e7eaf0;
+    --ink-dim: #9ba5b4;
+    --ink-mid: #7c8698;
+    --gold: #d9a441;
+    --gold-bright: #ebc06a;
+    --gold-soft: rgba(217,164,65,.12);
+    --gold-line: rgba(217,164,65,.35);
+    --steel: #5aa6c2;
+    --steel-soft: rgba(90,166,194,.12);
+    --ok: #5cb682;
+    --ok-soft: rgba(92,182,130,.14);
+    --warn: #d0913a;
+    --warn-soft: rgba(208,145,58,.14);
+    --err: #d46a6a;
+    --err-soft: rgba(212,106,106,.14);
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --maxw: 1160px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 600px at 78% -8%, rgba(217,164,65,.06), transparent 60%),
+      radial-gradient(900px 500px at 10% 4%, rgba(90,166,194,.05), transparent 55%),
+      var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: .005em;
+  }
+
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px 96px; }
+
+  a { color: var(--gold-bright); }
+
+  /* ---------- eyebrow / headings ---------- */
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 14px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 22px; height: 1px;
+    background: var(--gold-line);
+  }
+  .eyebrow.steel { color: var(--steel); }
+  .eyebrow.steel::before { background: rgba(90,166,194,.4); }
+
+  h2 {
+    font-size: clamp(21px, 2.4vw, 27px);
+    font-weight: 640;
+    letter-spacing: -.01em;
+    margin: 0 0 6px;
+    text-wrap: balance;
+  }
+  h2 .num {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--ink-mid);
+    font-weight: 500;
+    margin-right: 12px;
+    vertical-align: 2px;
+  }
+  .lede { color: var(--ink-dim); max-width: 68ch; margin: 0 0 26px; font-size: 15px; }
+
+  section { padding-top: 62px; border-top: 1px solid var(--line-soft); margin-top: 20px; }
+  section:first-of-type { border-top: 0; }
+
+  /* ---------- hero ---------- */
+  header.hero { padding: 82px 0 30px; }
+  .hero .kicker {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin: 0 0 20px;
+  }
+  .hero h1 {
+    font-size: clamp(38px, 6.4vw, 74px);
+    font-weight: 680;
+    letter-spacing: -.03em;
+    line-height: .98;
+    margin: 0 0 22px;
+    text-wrap: balance;
+  }
+  .hero h1 .em { color: var(--gold); }
+  .hero p {
+    font-size: clamp(16px, 1.9vw, 20px);
+    color: var(--ink-dim);
+    max-width: 60ch;
+    margin: 0 0 34px;
+  }
+  .hero .meta {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    font-family: var(--mono); font-size: 12px;
+  }
+  .chip {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--ink-dim);
+    padding: 6px 12px;
+    border-radius: 999px;
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+  .dot.steel { background: var(--steel); box-shadow: 0 0 8px var(--steel); }
+  .dot.ok { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+
+  /* ---------- generic card ---------- */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px 18px 16px;
+  }
+  .card h3 {
+    margin: 0 0 4px;
+    font-size: 15px;
+    font-weight: 620;
+    display: flex; align-items: center; gap: 9px;
+  }
+  .card p { margin: 0; color: var(--ink-dim); font-size: 13.5px; }
+  .tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--gold);
+    background: var(--gold-soft);
+    border: 1px solid var(--gold-line);
+    padding: 2px 7px;
+    border-radius: 6px;
+  }
+  .tag.steel { color: var(--steel); background: var(--steel-soft); border-color: rgba(90,166,194,.3); }
+
+  /* ---------- tools grid ---------- */
+  .group-label {
+    font-family: var(--mono);
+    font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--ink-mid);
+    margin: 26px 0 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .group-label::after { content: ""; flex: 1; height: 1px; background: var(--line-soft); }
+  .group-label:first-child { margin-top: 0; }
+
+  .tools { display: grid; grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: 12px; }
+  .tool {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-left: 2px solid var(--gold-line);
+    border-radius: 9px;
+    padding: 13px 14px;
+    transition: border-color .18s, transform .18s, background .18s;
+  }
+  .tool:hover { transform: translateY(-2px); border-color: var(--gold-line); background: var(--panel-2); }
+  .tool.sx { border-left-color: rgba(90,166,194,.4); }
+  .tool.sx:hover { border-color: rgba(90,166,194,.4); }
+  .tool.ops { border-left-color: var(--line); }
+  .tool code {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 5px;
+  }
+  .tool code .kw { color: var(--gold); }
+  .tool.sx code .kw { color: var(--steel); }
+  .tool span { font-size: 12.5px; color: var(--ink-dim); line-height: 1.45; }
+
+  /* ---------- pipeline (hero flow) ---------- */
+  .pipe { display: flex; flex-direction: column; gap: 0; }
+  .step {
+    display: grid;
+    grid-template-columns: 46px 1fr;
+    gap: 18px;
+    position: relative;
+    padding-bottom: 22px;
+  }
+  .step:last-child { padding-bottom: 0; }
+  .step .rail { display: flex; flex-direction: column; align-items: center; }
+  .step .idx {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: var(--panel-2);
+    border: 1px solid var(--gold-line);
+    color: var(--gold-bright);
+    font-family: var(--mono); font-weight: 600; font-size: 15px;
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+    position: relative; z-index: 2;
+  }
+  .step .line {
+    width: 1px; flex: 1; margin-top: 4px;
+    background: linear-gradient(var(--gold-line), var(--line));
+  }
+  .step:last-child .line { display: none; }
+  .step .body {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    padding: 14px 16px;
+  }
+  .step .body h4 {
+    margin: 0 0 5px; font-size: 15px; font-weight: 620;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .step .body p { margin: 0; color: var(--ink-dim); font-size: 13.5px; }
+  .step .fn { font-family: var(--mono); font-size: 11.5px; color: var(--steel); background: var(--steel-soft); padding: 2px 7px; border-radius: 6px; }
+  .branch {
+    margin-top: 9px; display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .pill {
+    font-family: var(--mono); font-size: 11px;
+    padding: 3px 9px; border-radius: 999px;
+    border: 1px solid transparent;
+  }
+  .pill.ok { color: var(--ok); background: var(--ok-soft); border-color: rgba(92,182,130,.3); }
+  .pill.warn { color: var(--warn); background: var(--warn-soft); border-color: rgba(208,145,58,.3); }
+  .pill.err { color: var(--err); background: var(--err-soft); border-color: rgba(212,106,106,.3); }
+
+  /* ---------- oracle layer ---------- */
+  .oracle-shell {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 22px;
+  }
+  .interface-bar {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    background: var(--panel-3);
+    border: 1px dashed var(--gold-line);
+    border-radius: 10px;
+    padding: 13px 16px;
+    margin-bottom: 20px;
+  }
+  .interface-bar .lbl { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
+  .interface-bar code { font-family: var(--mono); font-size: 12.5px; color: var(--ink-dim); }
+  .interface-bar code .f { color: var(--ink); }
+
+  .bridges { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .bridge {
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .bridge .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .bridge .name { font-weight: 620; font-size: 14.5px; }
+  .bridge .transport {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 5px;
+    border: 1px solid var(--line);
+    color: var(--ink-mid);
+  }
+  .bridge .transport.sdk { color: var(--gold); border-color: var(--gold-line); background: var(--gold-soft); }
+  .bridge .transport.http { color: var(--steel); border-color: rgba(90,166,194,.3); background: var(--steel-soft); }
+  .bridge .transport.cli { color: var(--ink-dim); }
+  .bridge .file { font-family: var(--mono); font-size: 11.5px; color: var(--ink-mid); }
+  .bridge p { margin: 6px 0 0; font-size: 12.5px; color: var(--ink-dim); }
+
+  /* ---------- two-up patterns ---------- */
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .pattern {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 20px;
+  }
+  .pattern h3 { margin: 0 0 3px; font-size: 17px; font-weight: 640; display: flex; align-items: center; gap: 10px; }
+  .pattern .sub { font-family: var(--mono); font-size: 12px; color: var(--ink-mid); margin: 0 0 16px; }
+
+  .fanout { display: flex; align-items: center; gap: 12px; }
+  .fanout .src {
+    font-family: var(--mono); font-size: 12px; font-weight: 600;
+    background: var(--gold-soft); border: 1px solid var(--gold-line); color: var(--gold-bright);
+    padding: 9px 12px; border-radius: 9px; white-space: nowrap;
+  }
+  .fanout .arrows { color: var(--ink-mid); font-size: 20px; }
+  .fanout .nodes { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .node {
+    font-family: var(--mono); font-size: 12px;
+    background: var(--panel-2); border: 1px solid var(--line);
+    padding: 6px 11px; border-radius: 7px; color: var(--ink-dim);
+  }
+  .synth {
+    margin-top: 14px; padding: 11px 14px;
+    border-radius: 9px;
+    background: var(--gold-soft); border: 1px solid var(--gold-line);
+    font-size: 13px; color: var(--ink);
+  }
+  .synth b { color: var(--gold-bright); }
+
+  .relay { display: flex; flex-direction: column; gap: 8px; }
+  .relay .stage {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--panel-2); border: 1px solid var(--line);
+    border-radius: 9px; padding: 9px 13px;
+  }
+  .relay .stage .role { font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--steel); width: 78px; flex: none; }
+  .relay .stage .m { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--ink); }
+  .relay .stage .d { font-size: 12px; color: var(--ink-dim); margin-left: auto; }
+  .relay .down { text-align: center; color: var(--ink-mid); font-size: 13px; line-height: .5; }
+
+  .note { margin-top: 15px; font-size: 12.5px; color: var(--ink-mid); border-left: 2px solid var(--line); padding-left: 12px; }
+
+  /* ---------- subsystems ---------- */
+  .subs { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 12px; }
+  .sub {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    padding: 15px 16px;
+  }
+  .sub .h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+  .sub .h .n { font-weight: 620; font-size: 14.5px; }
+  .sub .h .f { font-family: var(--mono); font-size: 11px; color: var(--ink-mid); }
+  .sub p { margin: 0; font-size: 12.8px; color: var(--ink-dim); line-height: 1.5; }
+
+  /* ---------- persistence table ---------- */
+  .table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 640px; }
+  thead th {
+    text-align: left; font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--gold); font-weight: 600;
+    padding: 13px 16px; background: var(--panel-2);
+    border-bottom: 1px solid var(--line);
+  }
+  tbody td { padding: 12px 16px; border-bottom: 1px solid var(--line-soft); color: var(--ink-dim); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody td:first-child { color: var(--ink); font-weight: 560; }
+  td code, .mono { font-family: var(--mono); font-size: 12px; color: var(--steel); }
+  .badge {
+    font-family: var(--mono); font-size: 10.5px;
+    padding: 2px 7px; border-radius: 5px;
+    background: var(--panel-3); border: 1px solid var(--line); color: var(--ink-mid);
+    white-space: nowrap;
+  }
+
+  footer.foot {
+    margin-top: 70px; padding-top: 26px; border-top: 1px solid var(--line-soft);
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+    font-family: var(--mono); font-size: 11.5px; color: var(--ink-mid);
+  }
+
+  @media (max-width: 720px) {
+    .two { grid-template-columns: 1fr; }
+    .step { grid-template-columns: 38px 1fr; gap: 13px; }
+    .fanout { flex-wrap: wrap; }
+  }
+
+  /* pipeline load pulse */
+  @media (prefers-reduced-motion: no-preference) {
+    .step .idx { animation: rise .5s ease both; animation-delay: calc(var(--i) * 70ms); }
+    @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  }
+  :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="hero">
+    <p class="kicker">ask-fable · MCP server</p>
+    <h1>A council of <span class="em">oracles</span>,<br>behind one gate.</h1>
+    <p>ask-fable is a Model Context Protocol server that lends an agent a <em>second brain</em>: external reasoning models reached through 37 guarded tools, called directly or orchestrated as councils, chains, and debates, with reusable context and correlated traces.</p>
+    <div class="meta">
+      <span class="chip"><span class="dot"></span><b>37</b>&nbsp;MCP tools</span>
+      <span class="chip"><span class="dot steel"></span><b>12</b>&nbsp;model routes</span>
+      <span class="chip"><span class="dot ok"></span>shared context + traces</span>
+      <span class="chip">stdout = JSON-RPC · stderr = trace</span>
+    </div>
+  </header>
+
+  <!-- 1 · TOOLS -->
+  <section>
+    <p class="eyebrow">The surface</p>
+    <h2><span class="num">01</span>Thirty-seven tools, four families</h2>
+    <p class="lede">Every call enters through <span class="mono">server.py · call_tool()</span>, which routes the tool name to a handler. The cards below show the core surface; the complete current inventory lives in <span class="mono">CLAUDE.md</span>.</p>
+
+    <div class="group-label">Reason — one model, one shot</div>
+    <div class="tools">
+      <div class="tool"><code><span class="kw">ask</span></code><span>Multi-turn guarded reasoning via Fable. Resumes a named session, dedups <code>context_ref</code>, returns prose + sidecar + follow-up.</span></div>
+      <div class="tool"><code><span class="kw">ask_opus5</span></code><span>The same tool on Claude Opus 5 — identical args and session model, roughly half the price and faster; own session namespace.</span></div>
+      <div class="tool sx"><code><span class="kw">ask_m3</span></code><span>Single-turn MiniMax-M3 via the <code>mmx</code> CLI. Guarded, cached.</span></div>
+      <div class="tool sx"><code><span class="kw">ask_glm</span></code><span>Single-turn GLM-5.2 over Z.ai's Anthropic endpoint. Needs an API key.</span></div>
+      <div class="tool sx"><code><span class="kw">ask_deepseek</span></code><span>Single-turn DeepSeek over its direct API. Guarded, cached.</span></div>
+      <div class="tool sx"><code><span class="kw">ask_gemini</span></code><span>Single-turn Gemini 3.1 Pro via the <code>agy</code> CLI. Process-group timeout.</span></div>
+      <div class="tool sx"><code><span class="kw">ask_codex</span></code><span>Single-turn GPT-5.6 Sol via the local <code>codex</code> CLI.</span></div>
+      <div class="tool sx"><code><span class="kw">ask_grok</span></code><span>Single-turn Grok via the local <code>grok</code> CLI.</span></div>
+      <div class="tool sx"><code><span class="kw">ask_kimi</span></code><span>Single-turn Kimi (kimi-code/k3) via the local <code>kimi</code> CLI, sandboxed to pure text reasoning; argv-capped prompt (~120k bytes).</span></div>
+      <div class="tool sx"><code><span class="kw">ask_ollama</span></code><span>Single-turn Ollama Cloud / local model over <code>/api/chat</code>. Bearer auth.</span></div>
+      <div class="tool sx"><code><span class="kw">ask_atlas</span></code><span>Single-turn Atlas Cloud model with quick, standard, or deep effort.</span></div>
+      <div class="tool sx"><code><span class="kw">list_atlas_models</span></code><span>Ranks live Atlas catalog metadata for a task and returns a native or structured model picker.</span></div>
+      <div class="tool sx"><code><span class="kw">ask_openrouter</span></code><span>Single-turn call to any of ~400 OpenRouter models behind one key; effort clamped to what the model supports; reports real dollar cost.</span></div>
+      <div class="tool sx"><code><span class="kw">list_openrouter_models</span></code><span>Free live OpenRouter catalog with price, context window, and per-model reasoning support; task-ranked shortlist.</span></div>
+    </div>
+
+    <div class="group-label">Orchestrate — many models, reconciled</div>
+    <div class="tools">
+      <div class="tool"><code><span class="kw">ask_council</span></code><span>Fan out to several oracles in parallel (default fable+minimax; tiers scale to full). Fable synthesizes.</span></div>
+      <div class="tool"><code><span class="kw">ask_chain</span></code><span>Sequential pipeline <code>m3 › glm › fable</code> — each stage refines the last; the tail synthesizes.</span></div>
+      <div class="tool"><code><span class="kw">ask_debate</span></code><span>Adversarial proposer/opponent exchange followed by Fable adjudication.</span></div>
+      <div class="tool"><code><span class="kw">ask_ollama_council</span></code><span>Fan out across several Ollama Cloud models; Fable synthesizes the verdict.</span></div>
+      <div class="tool"><code><span class="kw">ask_atlas_council</span></code><span>Atlas-only council with a GPT-first adjudicator ladder: local <code>codex</code> CLI → Atlas-hosted GPT-5.6 Sol → Fable.</span></div>
+      <div class="tool"><code><span class="kw">ask_openrouter_council</span></code><span>Cross-lab OpenRouter panel on one key (Claude + GPT + Gemini + DeepSeek), same GPT-first adjudicator ladder.</span></div>
+    </div>
+
+    <div class="group-label">Remember — kill the re-paste tax</div>
+    <div class="tools">
+      <div class="tool ops"><code><span class="kw">context_pack</span></code><span>Read bounded project files into a reusable context bundle.</span></div>
+      <div class="tool ops"><code><span class="kw">context_write</span></code><span>Store a code blob under a key for later <code>context_ref</code> reuse.</span></div>
+      <div class="tool ops"><code><span class="kw">context_read</span></code><span>Fetch a stored blob by key — value, age, description.</span></div>
+      <div class="tool ops"><code><span class="kw">context_list</span></code><span>List keys with size/age/description; newest first. No values.</span></div>
+      <div class="tool ops"><code><span class="kw">context_delete</span></code><span>Delete a stored context key.</span></div>
+    </div>
+
+    <div class="group-label">Operate — sessions, config, telemetry</div>
+    <div class="tools">
+      <div class="tool ops"><code><span class="kw">reset_session</span></code><span>Dump a session transcript to markdown (optional) and clear it for a fresh topic.</span></div>
+      <div class="tool ops"><code><span class="kw">stats</span></code><span>Aggregate the audit log — calls, errors, latency by model / session / day.</span></div>
+      <div class="tool ops"><code><span class="kw">configure_ollama_council</span></code><span>Persist a chosen Ollama council to config; survives restarts.</span></div>
+      <div class="tool ops"><code><span class="kw">configure_atlas_council</span></code><span>Persist the Atlas council panel and/or its adjudicator.</span></div>
+      <div class="tool ops"><code><span class="kw">configure_openrouter_council</span></code><span>Persist the OpenRouter panel and adjudicator for <code>ask_openrouter_council</code>.</span></div>
+      <div class="tool ops"><code><span class="kw">configure_tracing</span></code><span>Persist safe/full trace capture and live reasoning settings.</span></div>
+      <div class="tool ops"><code><span class="kw">list_ollama_models</span></code><span>Discover Cloud + local Ollama models and the configured council.</span></div>
+      <div class="tool ops"><code><span class="kw">trace_list · trace_get</span></code><span>Inspect correlated request timelines and full-mode trace excerpts.</span></div>
+      <div class="tool ops"><code><span class="kw">session_list · session_peek · session_stats</span></code><span>Discover shared hub sessions, preview turns, and inspect hub health.</span></div>
+    </div>
+  </section>
+
+  <!-- 2 · THE ASK PIPELINE -->
+  <section>
+    <p class="eyebrow">The main artery</p>
+    <h2><span class="num">02</span>What one <code style="font-family:var(--mono);color:var(--gold)">ask</code> call does</h2>
+    <p class="lede">The full journey of a single multi-turn call — from raw arguments to a saved answer. Every hop names its module. <span class="fn" style="margin-left:2px">server.py · _handle_ask()</span></p>
+
+    <div class="pipe">
+      <div class="step" style="--i:0">
+        <div class="rail"><div class="idx">1</div><div class="line"></div></div>
+        <div class="body">
+          <h4>Parse &amp; reset <span class="fn">sessions.py</span></h4>
+          <p>Pull <code>question</code>, <code>session</code>, <code>reset</code>. If <code>reset=true</code>, dump the old transcript to markdown and clear it — so ref counts only see post-reset context.</p>
+        </div>
+      </div>
+
+      <div class="step" style="--i:1">
+        <div class="rail"><div class="idx">2</div><div class="line"></div></div>
+        <div class="body">
+          <h4>Resolve context <span class="fn">context_store.py</span></h4>
+          <p>Merge inline <code>context</code> with any <code>context_ref</code> keys pulled from the SQLite context store. If <em>every</em> ref is missing and there's no other context or history — fail fast, never call the model.</p>
+          <div class="branch"><span class="pill err">all refs missing → needs_context</span></div>
+        </div>
+      </div>
+
+      <div class="step" style="--i:2">
+        <div class="rail"><div class="idx">3</div><div class="line"></div></div>
+        <div class="body">
+          <h4>The gate <span class="fn">guard.py</span></h4>
+          <p>Two layers: sanity (length &amp; size bounds), then ask-fable's bundled prohibited-use denylist. Denied calls are audited and refused here — the model is never reached.</p>
+          <div class="branch"><span class="pill ok">passed → continue</span><span class="pill err">denied → refused · stage: guard</span></div>
+        </div>
+      </div>
+
+      <div class="step" style="--i:3">
+        <div class="rail"><div class="idx">4</div><div class="line"></div></div>
+        <div class="body">
+          <h4>Dispatch to Fable <span class="fn">fable.py</span></h4>
+          <p>Call <code>fable.run()</code> with the session's resume id. The Agent SDK runs in-process (reusing <code>~/.claude</code> OAuth — no API key); if unavailable it falls back to the <code>claude</code> CLI. Thinking blocks are captured; reasoning can stream live to stderr.</p>
+          <div class="branch"><span class="pill warn">refused → stage: model</span><span class="pill err">error → kind + detail</span><span class="pill ok">ok → continue</span></div>
+        </div>
+      </div>
+
+      <div class="step" style="--i:4">
+        <div class="rail"><div class="idx">5</div><div class="line"></div></div>
+        <div class="body">
+          <h4>Extract sidecar &amp; guard the loop <span class="fn">sidecar.py</span></h4>
+          <p>Strip the <code>```json-sidecar</code> block from the prose. If the recommendation is <code>needs_more_context</code>, bump the session's blocked streak — past the cap (default 2) the call returns <code>context_exhausted</code> to stop an agent's re-ask loop.</p>
+        </div>
+      </div>
+
+      <div class="step" style="--i:5">
+        <div class="rail"><div class="idx">6</div><div class="line"></div></div>
+        <div class="body">
+          <h4>Record the turn <span class="fn">sessions.py · audit.py</span></h4>
+          <p>Save the SDK session id + (q, a, thinking) to the in-memory transcript for the next resume. Append one JSONL decision record — hashed question, model, latency, consensus fields — to the audit log.</p>
+        </div>
+      </div>
+
+      <div class="step" style="--i:6">
+        <div class="rail"><div class="idx">7</div><div class="line"></div></div>
+        <div class="body">
+          <h4>Persist &amp; return <span class="fn">outputs.py</span></h4>
+          <p>Write the answer (plus thinking &amp; sources) to a timestamped markdown file, then return the JSON body: <code>status · model · answer · sidecar · session</code> — plus optional thinking, ref attribution, follow-up hints, and saved-file path.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · ORACLE LAYER -->
+  <section>
+    <p class="eyebrow steel">The engine room</p>
+    <h2><span class="num">03</span>One interface, multiple bridges</h2>
+    <p class="lede">Every backend hides behind <span class="mono">oracles.run(key, …)</span> and returns the same shape. The registry checks the cache, then the circuit breaker, then routes by key — and records the outcome for both.</p>
+
+    <div class="oracle-shell">
+      <div class="interface-bar">
+        <span class="lbl">common contract</span>
+        <code><span class="f">OracleResult</span>( status, key, text, kind, model, thinking, session_id )</code>
+      </div>
+      <div class="bridges">
+        <div class="bridge">
+          <div class="top"><span class="name">Fable</span><span class="transport sdk">SDK / CLI</span></div>
+          <div class="file">fable.py · newest claude-fable-*</div>
+          <p>In-process Agent SDK, OAuth-reused, multi-turn resume. The only stateful oracle — and the council's synthesizer. Not pinned to an id: it asks for the newest Fable and steps down a rung if the local Claude Code is too old to run it.</p>
+        </div>
+        <div class="bridge">
+          <div class="top"><span class="name">Claude Opus 5</span><span class="transport sdk">SDK / CLI</span></div>
+          <div class="file">opus.py · claude-opus-5</div>
+          <p>Same OAuth session and multi-turn model as Fable, in its own session namespace. Roughly half the price, noticeably faster.</p>
+        </div>
+        <div class="bridge">
+          <div class="top"><span class="name">MiniMax-M3</span><span class="transport cli">CLI</span></div>
+          <div class="file">minimax.py · mmx</div>
+          <p>Anthropic-Messages envelope parsed from CLI stdout. Stateless.</p>
+        </div>
+        <div class="bridge">
+          <div class="top"><span class="name">Gemini 3.1 Pro</span><span class="transport cli">CLI</span></div>
+          <div class="file">gemini.py · agy</div>
+          <p>Raw stdout answer; SIGKILLs the whole process group on timeout.</p>
+        </div>
+        <div class="bridge">
+          <div class="top"><span class="name">GPT-5.6 Sol</span><span class="transport cli">CLI</span></div>
+          <div class="file">codex.py · codex exec</div>
+          <p>Hermetic, read-only <code>codex exec</code> invocation — user config and hooks ignored, repo untouchable. Process-group SIGKILL on timeout.</p>
+        </div>
+        <div class="bridge">
+          <div class="top"><span class="name">Grok</span><span class="transport cli">CLI</span></div>
+          <div class="file">grok.py · grok</div>
+          <p>Single-turn <code>-p</code> mode with tools disabled; default low reasoning effort keeps context-heavy turns bounded.</p>
+        </div>
+        <div class="bridge">
+          <div class="top"><span class="name">Kimi</span><span class="transport cli">CLI</span></div>
+          <div class="file">kimi.py · kimi</div>
+          <p>Runs against a generated, trust-free <code>KIMI_CODE_HOME</code> so the agentic CLI answers from text only; argv caps the prompt near 131k bytes.</p>
+        </div>
+        <div class="bridge">
+          <div class="top"><span class="name">GLM · DeepSeek</span><span class="transport http">HTTP</span></div>
+          <div class="file">anthropic_http.py</div>
+          <p>POST <code>/v1/messages</code> to an Anthropic-compatible endpoint (Z.ai, DeepSeek). Env-configured keys.</p>
+        </div>
+        <div class="bridge">
+          <div class="top"><span class="name">Ollama</span><span class="transport http">HTTP</span></div>
+          <div class="file">ollama.py</div>
+          <p>POST <code>/api/chat</code>, bearer token. Local daemon proxies <code>:cloud</code>, or hit ollama.com direct.</p>
+        </div>
+        <div class="bridge">
+          <div class="top"><span class="name">Atlas Cloud</span><span class="transport http">HTTP</span></div>
+          <div class="file">atlas.py · OpenAI chat</div>
+          <p>Free catalog lookup ranks live metadata for a task; calls use Atlas API keys or route Grok models to the local CLI.</p>
+        </div>
+        <div class="bridge">
+          <div class="top"><span class="name">OpenRouter</span><span class="transport http">HTTP</span></div>
+          <div class="file">openrouter.py · OpenAI chat</div>
+          <p>One key, ~400 models across every major lab. Free catalog with per-model reasoning support; effort is clamped, never probed; real cost reported per call.</p>
+        </div>
+        <div class="bridge" style="border-style:dashed; background:transparent;">
+          <div class="top"><span class="name" style="color:var(--gold)">registry</span><span class="transport sdk">oracles.py</span></div>
+          <div class="file">oracle_common.py</div>
+          <p><b style="color:var(--ink)">cache → breaker → route → record.</b> Composes the message, canonicalizes keys, expands tiers, shapes <code>REFUSED:</code> replies.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · COUNCIL VS CHAIN -->
+  <section>
+    <p class="eyebrow">Two ways to think harder</p>
+    <h2><span class="num">04</span>Council fans out · Chain relays</h2>
+    <p class="lede">When one model isn't enough, ask-fable reconciles many — either in parallel and merged, or in sequence and refined.</p>
+
+    <div class="two">
+      <div class="pattern">
+        <h3><span class="tag">ask_council</span> Parallel fan-out</h3>
+        <p class="sub">bounded semaphore · hard wall-clock timeout</p>
+        <div class="fanout">
+          <div class="src">question</div>
+          <div class="arrows">⇒</div>
+          <div class="nodes">
+            <div class="node">fable</div>
+            <div class="node">minimax</div>
+            <div class="node">glm · gemini · deepseek</div>
+            <div class="node">…ollama council</div>
+          </div>
+        </div>
+        <div class="synth"><b>Fable synthesizes</b> the anonymized panel → consensus (strong / partial / divergent) + material-disagreement flag + quorum envelope.</div>
+        <p class="note">0 answered → surface refusal/error · 1 answered → return it degraded (synthesizer: none) · 2+ → true synthesis.</p>
+      </div>
+
+      <div class="pattern">
+        <h3><span class="tag steel">ask_chain</span> Sequential relay</h3>
+        <p class="sub">order-sensitive · duplicates allowed</p>
+        <div class="relay">
+          <div class="stage"><span class="role">drafter</span><span class="m">m3</span><span class="d">from scratch</span></div>
+          <div class="down">↓</div>
+          <div class="stage"><span class="role">critic</span><span class="m">glm</span><span class="d">sees prior</span></div>
+          <div class="down">↓</div>
+          <div class="stage"><span class="role">synthesize</span><span class="m">fable</span><span class="d">sees all stages</span></div>
+        </div>
+        <p class="note">Tracks recommendation drift across stages. If the tail fails, Fable synthesizes the survivors. Timeout scales with pipeline length.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · SUBSYSTEMS -->
+  <section>
+    <p class="eyebrow steel">The scaffolding</p>
+    <h2><span class="num">05</span>Cross-cutting subsystems</h2>
+    <p class="lede">Fourteen modules wrap every call with safety, memory, resilience, and observability — each best-effort, none allowed to crash a turn.</p>
+
+    <div class="subs">
+      <div class="sub"><div class="h"><span class="n">guard</span><span class="f">guard.py</span></div><p>Two-layer gate: sanity bounds + prohibited-use denylist. Model scope (software only) is enforced separately in the system prompt.</p></div>
+      <div class="sub"><div class="h"><span class="n">sessions</span><span class="f">sessions.py</span></div><p>In-memory Fable transcripts + resume ids + the blocked-streak counter. Thread-locked; dumps to markdown on reset.</p></div>
+      <div class="sub"><div class="h"><span class="n">context store</span><span class="f">context_store.py</span></div><p>Durable keyed blobs in SQLite (WAL). Kills the re-paste tax — write once, <code>context_ref</code> forever.</p></div>
+      <div class="sub"><div class="h"><span class="n">health</span><span class="f">health.py</span></div><p>Per-oracle circuit breaker: closed → open → half-open. Auto-skips chronically failing backends; ignores scope/config non-failures.</p></div>
+      <div class="sub"><div class="h"><span class="n">cache</span><span class="f">cache.py</span></div><p>Best-effort answer cache for single-shot + council + chain (never multi-turn <code>ask</code>). Keyed on tool+models+question+context hash, 1h TTL.</p></div>
+      <div class="sub"><div class="h"><span class="n">sidecar</span><span class="f">sidecar.py</span></div><p>The machine-readable contract: a <code>json-sidecar</code> fence carrying recommendation, confidence, and needs-context — stripped from prose, trusted only if unambiguous.</p></div>
+      <div class="sub"><div class="h"><span class="n">audit</span><span class="f">audit.py</span></div><p>Append-only JSONL, one record per decision. fcntl-locked + fsync'd, question hashed by default, size-rotated at 50MB.</p></div>
+      <div class="sub"><div class="h"><span class="n">stats</span><span class="f">stats.py</span></div><p>Read-only aggregation of the audit log into calls / errors / p95 latency, bucketed by model, session, or day.</p></div>
+      <div class="sub"><div class="h"><span class="n">console</span><span class="f">console.py</span></div><p>Boxed, colorized progress + reasoning to <em>stderr</em> — stdout stays pure JSON-RPC. Streams Fable's thinking live when asked.</p></div>
+      <div class="sub"><div class="h"><span class="n">outputs</span><span class="f">outputs.py</span></div><p>Every successful answer atomically written to timestamped markdown — question, context, answer, thinking, and council sources.</p></div>
+      <div class="sub"><div class="h"><span class="n">config</span><span class="f">config.py</span></div><p>Tool-writable JSON store. Precedence: config file → env var → default. Atomic writes persist the Ollama council across restarts.</p></div>
+      <div class="sub"><div class="h"><span class="n">session hub</span><span class="f">hub.py</span></div><p>Visibility-only mirror of successful turns across local MCP instances — list, peek, and aggregate by label. Never read by the oracles.</p></div>
+      <div class="sub"><div class="h"><span class="n">traces</span><span class="f">trace_store.py · trace_runtime.py</span></div><p>Schema-v2 correlated request timelines; safe mode stores metadata only, full mode writes redacted, size-capped bundles.</p></div>
+      <div class="sub"><div class="h"><span class="n">paths</span><span class="f">_paths.py</span></div><p>XDG dirs + secure I/O: 0700 dirs, 0600 files, atomic tempfile + rename + fsync everywhere — no world-readable window.</p></div>
+    </div>
+  </section>
+
+  <!-- 6 · PERSISTENCE -->
+  <section>
+    <p class="eyebrow">What survives the turn</p>
+    <h2><span class="num">06</span>State written to disk</h2>
+    <p class="lede">Eight best-effort stores under XDG dirs. Default-created files are owner-only; SQLite stores use WAL.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Store</th><th>Location</th><th>Format</th><th>Lifetime</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Sessions</td><td><code>state/ask_fable/sessions/</code></td><td>markdown dump</td><td><span class="badge">manual</span></td></tr>
+          <tr><td>Context</td><td><code>state/ask_fable/context.db</code></td><td>SQLite · WAL</td><td><span class="badge">no TTL</span></td></tr>
+          <tr><td>Session hub</td><td><code>state/ask_fable/hub.db</code></td><td>SQLite · WAL</td><td><span class="badge">row cap (10k)</span></td></tr>
+          <tr><td>Full trace bundles</td><td><code>state/ask_fable/traces/</code></td><td>JSONL + Markdown</td><td><span class="badge">full mode only</span></td></tr>
+          <tr><td>Audit log</td><td><code>state/ask_fable/decisions.jsonl</code></td><td>JSONL + backups</td><td><span class="badge">rotate @ 50MB</span></td></tr>
+          <tr><td>Answer cache</td><td><code>state/ask_fable/cache.db</code></td><td>SQLite · WAL</td><td><span class="badge">1h TTL</span></td></tr>
+          <tr><td>Answers</td><td><code>state/ask_fable/answers/</code></td><td>markdown/reply</td><td><span class="badge">manual</span></td></tr>
+          <tr><td>Config</td><td><code>config/ask_fable/config.json</code></td><td>JSON</td><td><span class="badge">manual</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span>ask-fable · main · 05d9bba</span>
+    <span>stdout: JSON-RPC · stderr: trace · disk: secure XDG storage</span>
+  </footer>
+
+</div>
+</body>
+</html>
