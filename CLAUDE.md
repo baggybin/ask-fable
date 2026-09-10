@@ -14,6 +14,9 @@ needed). Refused only when the question itself directly asks for
 offensive-security work (exploit development, attack tooling) or non-software
 domain knowledge (e.g. biology); questions about security-related code are fine.
 
+When a tool would clearly help but you don't call it yourself, tell the operator in
+one line — which tool and why — so they can opt in; don't silently skip it.
+
 > A local copy of this menu prints on demand via
 > `python3 ~/.claude/ask_fable_menu.py`.
 
