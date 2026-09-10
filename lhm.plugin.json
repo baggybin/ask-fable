@@ -678,6 +678,116 @@
       }
     },
     {
+      "name": "ask_conference",
+      "description": "DIVERGENT, MULTI-ROUND — a brainstorming CONFERENCE where several models argue a topic TOGETHER over rounds, each reading the running transcript and building on (or pushing back against) what came before, then a rapporteur writes the MAP OF THE DISAGREEMENT (converged / the crux / what would change it). Unlike `ask_council` (models answer in isolation, then reconcile) the participants actually hear each other, so positions can move — use it for open-ended ideation and design exploration ('what should we build', 'ways to approach X'), where you want genuine divergence rather than one averaged answer. Pick the bench with `models` (from ['fable','opus','deepseek','minimax','glm','gemini','codex','grok','kimi'] plus any 'atlas:<id>' / 'openrouter:<id>' / 'ollama:<model>' token); default is the available subset of fable/opus/deepseek/minimax/glm. `rounds` is 1–10 (default 3) and `synthesizer` writes the closing map (default 'fable'). When called with no `models` and the MCP client supports form elicitation, a NATIVE model picker pops up to choose the roster and topic (set `interactive: false` to skip it). Costs one model call per participant per round plus the synthesis, so it is heavier than a council — keep the bench and rounds modest. Same scope as `ask`: conceptual software/engineering ideation is in scope; direct offensive-security asks and non-software domains are refused. Aliases: 'm3' = minimax, 'gpt' = codex, 'opus5' = opus.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "The topic or open question for the models to brainstorm and argue together."
+          },
+          "context": {
+            "type": "string",
+            "default": "",
+            "description": "Optional code snippets, file paths, or structural context (shared by all participants)."
+          },
+          "context_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "Key(s) of context saved with `context_write` to pull in and prepend to `context` — paste a big context ONCE, reference it by key here. Missing keys are reported, not fatal."
+          },
+          "session": {
+            "type": "string",
+            "description": "Optional coordination key for the cross-agent hub (`session_list` / `session_peek`). Reuse the same key across agents working the same decision so turns group together. Defaults to the tool name (`ask_council` / `ask_chain` / `ask_debate` / …) when omitted."
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "fable",
+                    "fable51",
+                    "opus",
+                    "deepseek",
+                    "minimax",
+                    "glm",
+                    "gemini",
+                    "codex",
+                    "grok",
+                    "kimi",
+                    "claude-fable-5-1",
+                    "claude-opus-5",
+                    "fable-5.1",
+                    "fable-51",
+                    "fable5.1",
+                    "gpt",
+                    "m3",
+                    "opus-5",
+                    "opus5",
+                    "xai",
+                    "twin",
+                    "twin flame",
+                    "twin flames",
+                    "twin-flame",
+                    "twin-flames",
+                    "twin_flame",
+                    "twin_flames",
+                    "twinflame",
+                    "twinflames",
+                    "twins"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "pattern": "^ollama:.+"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^atlas:.+"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^openrouter:.+"
+                }
+              ]
+            },
+            "description": "The debater bench (2 or more). From ['fable','opus','deepseek','minimax','glm','gemini','codex','grok','kimi'] plus any 'ollama:<model>' / 'atlas:<id>' / 'openrouter:<id>' token. Omit to be offered a native picker (when the client supports elicitation), else it falls back to the available subset of fable/opus/deepseek/minimax/glm."
+          },
+          "rounds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "default": 3,
+            "description": "How many rounds of turns each participant takes (default 3, up to 10)."
+          },
+          "synthesizer": {
+            "type": "string",
+            "default": "fable",
+            "description": "Model that writes the closing map of the disagreement (default 'fable'; 'opus', 'codex', …)."
+          },
+          "interactive": {
+            "type": "boolean",
+            "default": true,
+            "description": "When true and `models` is omitted, pop a native model picker if the MCP client supports form elicitation. Set false to skip it."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "ask_ollama",
       "description": "Ask a single Ollama Cloud model — on its own — to reason about the SOFTWARE/ENGINEERING work you're doing: code structure, functionality, data/control flow, module and function relationships, routing, architecture, and design trade-offs. Pass `model` to pick a cloud model (e.g. 'kimi-k2.7-code:cloud', 'gpt-oss:120b-cloud', 'deepseek-v3.2:cloud'); omit it to use the server's default. Reached via a local signed-in `ollama` daemon by default (no API key needed). Single-turn. Broad and conceptual engineering questions (including brainstorming/ideas for future code) are fine — add a snippet or file path in `context` when the question is about existing code. Direct offensive-security asks (exploit development, attack tooling) and non-software domain knowledge (biology/medicine refused; neuroscience, cognitive science, AI/ML, and CS are in-scope) are refused. Use `ask_council` to mix Ollama models with Fable.",
       "inputSchema": {
