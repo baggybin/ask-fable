@@ -4,6 +4,14 @@ A short note on the three technical diagrams (`hero-council.png`,
 `tools-overview.png`, `guard-layers.png`) under `docs/img/`, so future regeneration is
 reproducible.
 
+> **Retired (2026-09-10):** the `hero-council` banner and the `tools-overview`
+> artwork were dropped from the README in the docs simplification, and their
+> `images/` display files removed. The prompts below stay only as a regeneration
+> record. In use today: `ask-fable-system-map.png`, `ask-fable-request-flow.png`,
+> `guard_layers_modern.jpg`, `ask_atlas_new.jpg`, and the mermaid mode charts
+> (`ask_core`/`ask_council`/`ask_chain`/`ask_debate`/`guard_layers`, built by
+> `generate_diagrams.py`).
+
 ## Current README explainers
 
 The README's two wide explainers were generated with OpenAI's built-in image
@@ -89,7 +97,7 @@ stock imagery. Crisp typography, readable labels, vector aesthetic.
 ### `tools-overview.png` — historical tool-inventory artwork (not the current inventory)
 
 This documentation preserves the original 8-tool prompt and a later 19-tool
-HTML source variant. Neither tracks the current 37-tool MCP surface; use
+HTML source variant. Neither tracks the current 39-tool MCP surface; use
 `README.md` or `CLAUDE.md` for the live inventory.
 
 ```
