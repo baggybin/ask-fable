@@ -31,7 +31,7 @@ in `src/ask_fable/server.py`; the implementation is the source of truth.
 
 ## Pipeline
 
-All four images were generated with **Seedream v5.0 Lite** on
+The diagram artwork was generated with **Seedream v5.0 Lite** on
 **Atlas Cloud** (`bytedance/seedream-v5.0-lite`, ~$0.003 each on the
 90% discount). The model was chosen because it is explicitly tuned
 for typography and poster design — every diagram here is mostly
@@ -50,76 +50,13 @@ Seedream returned every prompt at **3072×3072** regardless of the
 requested `size` (16:5 hints were ignored). All four images were then
 post-processed with Pillow in `.venv`:
 
-- Resized to web-friendly widths (`1600px` for the hero banner,
-  `1400px` for the square diagrams) with `Image.LANCZOS`.
+- Resized to web-friendly widths (`1400px` for the square diagrams) with `Image.LANCZOS`.
 - Re-saved as **PNG, `optimize=True`** (lossless, ~1MB each).
-- The hero was cropped to its content band before resize; the
-  square posters were not cropped.
 
 ## Prompts
 
-The four prompts are reproduced below so any of them can be
+The prompts are reproduced below so any of them can be
 re-rendered verbatim, tweaked, or replaced.
-
-### `hero-council.png` — council fan-out banner
-
-```
-A wide, clean, flat-vector technical infographic for a software tool
-called "ask-fable". Style: minimal modern flat illustration with subtle
-gradient background (very dark navy #0f172a), soft glow accents in cyan
-#22d3ee and violet #a78bfa. No photographic content, no characters, no
-AI-style imagery.
-
-Layout (left to right):
-
-1. Left side: bold sans-serif wordmark "ask-fable" in white, large.
-   Subtitle in light cyan: "Gated MCP server for external reasoning".
-   Small caption beneath: "Fable · MiniMax · Gemini · GLM · DeepSeek ·
-   Ollama".
-
-2. Middle: a horizontal fan-out diagram. A single rounded rectangle on
-   the left labeled "Your agent's question". Six small rounded
-   rectangles branching out to the right, each with a distinct accent
-   color and labeled: "claude-fable-5-1" (cyan), "MiniMax-M3" (violet),
-   "Gemini 3.1 Pro" (amber), "GLM-5.2" (emerald), "deepseek-v4-pro"
-   (rose), "Ollama Cloud" (sky blue). Thin connector lines from the
-   source box to each oracle, with small arrows.
-
-3. Right side: a single rounded rectangle labeled "Fable synthesizes"
-   in white on a cyan-tinted card, with a downward arrow to a final
-   rounded rectangle labeled "One merged answer". Small note in dim
-   text below: "quorum · degraded · confidence".
-
-Add small subtle dot-grid background pattern. No icons, no people, no
-stock imagery. Crisp typography, readable labels, vector aesthetic.
-```
-
-### `tools-overview.png` — historical tool-inventory artwork (not the current inventory)
-
-This documentation preserves the original 8-tool prompt and a later 19-tool
-HTML source variant. Neither tracks the current 39-tool MCP surface; use
-`README.md` or `CLAUDE.md` for the live inventory.
-
-```
-A clean, minimal, flat-vector technical infographic for a software tool
-called "ask-fable". Style: modern flat illustration with a subtle dark
-background (deep slate #1e293b), thin grid pattern, soft glow accents
-in cyan #22d3ee and green #34d399.
-
-Title at top in white sans-serif: "The tools". Subtitle in muted gray:
-"8 tools, three families" (historical artwork; not a live tool count).
-
-Layout: a 3-column x 3-row grid of rounded rectangle cards. Each card
-has a bold 2-3 word label, a one-line description, and a small
-accent-colored top border indicating family.
-
-Column 1 (cyan, "single oracle"): ask · ask_m3 · ask_glm
-Column 2 (violet, "council"):    ask_council · ask_ollama · ask_ollama_council
-Column 3 (amber, "setup"):       ask_gemini · list_ollama_models · configure_ollama_council
-
-Bottom: legend with 3 color swatches (cyan "single oracle", violet
-"council", amber "setup") and a tiny footer.
-```
 
 ### `guard-layers.png` — three-layer guard
 
