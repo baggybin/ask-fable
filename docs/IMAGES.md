@@ -4,11 +4,11 @@ A short note on the three technical diagrams (`hero-council.png`,
 `tools-overview.png`, `guard-layers.png`) under `docs/img/`, so future regeneration is
 reproducible.
 
-> **Retired (2026-09-10):** the `hero-council` banner and the `tools-overview`
-> artwork were dropped from the README in the docs simplification, and their
-> `images/` display files removed. The prompts below stay only as a regeneration
-> record. In use today: `ask-fable-system-map.png`, `ask-fable-request-flow.png`,
-> `guard_layers_modern.jpg`, `ask_atlas_new.jpg`, and the mermaid mode charts
+> **Note (2026-09-10):** the `hero-council` fan-out banner and the `tools-overview`
+> artwork were retired in the docs simplification (their `docs/img/` sources
+> removed). In use today: the hero banner (`ask_fable_hero_banner.jpg`),
+> `ask-fable-system-map.png`, `ask-fable-request-flow.png`, `guard_layers_modern.jpg`,
+> `ask_atlas_new.jpg`, and the mermaid mode charts
 > (`ask_core`/`ask_council`/`ask_chain`/`ask_debate`/`guard_layers`, built by
 > `generate_diagrams.py`).
 
