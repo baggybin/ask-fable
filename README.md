@@ -1,6 +1,11 @@
 # ask-fable: Multi-Model Reasoning MCP Server
 
 <!-- mcp-name: io.github.baggybin/ask-fable -->
+
+<p align="center">
+  <img src="images/ask_fable_hero_banner.jpg" alt="ask-fable — The AI Oracle Council: Ultra-dense architectural hero banner">
+</p>
+
 **ask-fable** is a portable, installable **MCP (Model Context Protocol) server** for AI coding agents. It works in **Claude Code**, OpenCode, Kimi Code, Grok, Cursor, Codex, and any other harness that can spawn a local MCP server.
 
 It gives those agents guarded code and architecture reasoning from **Anthropic's Claude Fable** (the newest `claude-fable-*`), Claude Opus 5 (`claude-opus-5`), MiniMax (`MiniMax-M3`), Gemini, Codex, GLM, DeepSeek, Grok, Kimi, and Ollama Cloud models. It can query one backend, synthesize a parallel council, run an ordered refinement chain, or stage a structured adversarial debate.
@@ -338,17 +343,6 @@ uv run ruff check src tests
 `salient-core` (a richer prohibited-use denylist) is unpublished and therefore
 not declared as an extra; the guard picks it up automatically at runtime if it
 is installed in the environment.
-
-### Review records
-
-Notable design/quality reviews — several run by dogfooding ask_fable's own oracle
-tools on this codebase — are recorded under [`docs/reviews/`](docs/reviews/):
-
-- [Council consensus, request guard & context store (2026-07-12)](docs/reviews/2026-07-12-consensus-guard-store.md)
-  — coverage-aware council consensus (`consensus_votes`), the denylist inflection fix,
-  and context-store error visibility, cross-checked by a 6-model council. Also carries
-  the assessment (and corrected bibliography) of the software-decomposition essay that
-  study was based on.
 
 ## Documentation
 
