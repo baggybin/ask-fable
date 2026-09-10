@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1400px; height:1400px; }
+  body {
+    font-family:"Noto Sans","DejaVu Sans",sans-serif;
+    background:
+      radial-gradient(1100px 900px at 50% 0%, #101a33 0%, rgba(16,26,51,0) 62%),
+      linear-gradient(160deg,#0a0f1e 0%,#0b1122 55%,#090d19 100%);
+    color:#fff; position:relative; overflow:hidden; -webkit-font-smoothing:antialiased;
+  }
+  .grid { position:absolute; inset:0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px);
+    background-size:70px 70px; }
+
+  .title { position:absolute; top:66px; width:100%; text-align:center;
+    font-size:104px; font-weight:800; letter-spacing:-3px; }
+  .sub { position:absolute; top:200px; width:100%; text-align:center;
+    font-size:42px; font-weight:600; color:#93a3bd; }
+
+  .col { position:absolute; top:312px; width:406px; }
+  .col.a { left:56px; }
+  .col.b { left:496px; }
+  .col.c { left:936px; }
+
+  .hbar { width:66px; height:6px; border-radius:4px; margin-bottom:16px; }
+  .htxt { font-size:26px; font-weight:800; letter-spacing:-.3px; margin-bottom:22px; }
+  .htxt small { font-weight:600; color:#8496b1; font-size:19px; letter-spacing:0; }
+
+  .card { border-radius:16px; padding:15px 20px; margin-bottom:16px;
+    background:linear-gradient(180deg,#141d33 0%,#0f1626 100%);
+    border:1px solid #21304d; border-left-width:4px;
+    box-shadow:0 6px 18px rgba(0,0,0,.24); }
+  .card .n { font-size:25px; font-weight:800; letter-spacing:-.4px; }
+  .card .d { margin-top:6px; font-size:18.5px; font-weight:500; color:#9fb0c9; line-height:1.28; }
+
+  .cyan { color:#2dd4ee; } .bg-cyan { background:#2dd4ee; box-shadow:0 0 18px rgba(45,212,238,.6); }
+  .bl-cyan { border-left-color:#2dd4ee; }
+  .purp { color:#8f74ff; } .bg-purp { background:#7c5cff; box-shadow:0 0 18px rgba(124,92,255,.6); }
+  .bl-purp { border-left-color:#7c5cff; }
+  .oran { color:#eaa049; } .bg-oran { background:#e8963f; box-shadow:0 0 18px rgba(232,150,63,.55); }
+  .bl-oran { border-left-color:#e8963f; }
+
+  .legend { position:absolute; bottom:96px; width:100%; display:flex; justify-content:center;
+    gap:52px; font-size:24px; font-weight:600; color:#cdd8ea; }
+  .legend div { display:flex; align-items:center; gap:12px; }
+  .sw { width:26px; height:26px; border-radius:7px; }
+  .foot { position:absolute; bottom:46px; width:100%; text-align:center;
+    font-size:22px; font-weight:600; color:#8092ad; }
+  .foot b { color:#c9d5e8; font-weight:700; }
+</style>
+</head>
+<body>
+  <div class="grid"></div>
+  <div class="title">The tools</div>
+  <div class="sub">Historical 19-tool design · three families</div>
+
+  <!-- Single oracle -->
+  <div class="col a">
+    <div class="hbar bg-cyan"></div>
+    <div class="htxt cyan">Single oracle <small>· one model</small></div>
+    <div class="card bl-cyan"><div class="n">ask</div><div class="d">Fable, multi-turn (OAuth session)</div></div>
+    <div class="card bl-cyan"><div class="n">ask_m3</div><div class="d">MiniMax-M3, single-turn</div></div>
+    <div class="card bl-cyan"><div class="n">ask_gemini</div><div class="d">Gemini 3.1 Pro, via the agy CLI</div></div>
+    <div class="card bl-cyan"><div class="n">ask_codex</div><div class="d">GPT-5.6 Sol, via the codex CLI</div></div>
+    <div class="card bl-cyan"><div class="n">ask_glm</div><div class="d">GLM-5.2, single-turn</div></div>
+    <div class="card bl-cyan"><div class="n">ask_ollama</div><div class="d">one Ollama Cloud model</div></div>
+  </div>
+
+  <!-- Multi-model -->
+  <div class="col b">
+    <div class="hbar bg-purp"></div>
+    <div class="htxt purp">Multi-model <small>· many models</small></div>
+    <div class="card bl-purp"><div class="n">ask_council</div><div class="d">fan out in parallel → Fable synthesizes</div></div>
+    <div class="card bl-purp"><div class="n">ask_chain</div><div class="d">ordered relay — each refines the last</div></div>
+    <div class="card bl-purp"><div class="n">ask_debate</div><div class="d">two models argue → Fable adjudicates</div></div>
+    <div class="card bl-purp"><div class="n">ask_ollama_council</div><div class="d">Ollama-only council → synthesized</div></div>
+  </div>
+
+  <!-- Context & setup -->
+  <div class="col c">
+    <div class="hbar bg-oran"></div>
+    <div class="htxt oran">Context &amp; setup <small>· plumbing</small></div>
+    <div class="card bl-oran"><div class="n">context_pack</div><div class="d">server-side context packing</div></div>
+    <div class="card bl-oran"><div class="n">context_write · read · list · delete</div><div class="d">the context bus — paste once, reuse by key</div></div>
+    <div class="card bl-oran"><div class="n">list_ollama_models</div><div class="d">discover available cloud models</div></div>
+    <div class="card bl-oran"><div class="n">configure_ollama_council</div><div class="d">persist the council picks</div></div>
+    <div class="card bl-oran"><div class="n">stats</div><div class="d">usage &amp; health from the audit log</div></div>
+    <div class="card bl-oran"><div class="n">reset_session</div><div class="d">clear an ask session</div></div>
+  </div>
+
+  <div class="legend">
+    <div><span class="sw bg-cyan"></span>single oracle</div>
+    <div><span class="sw bg-purp"></span>multi-model</div>
+    <div><span class="sw bg-oran"></span>context &amp; setup</div>
+  </div>
+  <div class="foot">All tools share the same <b>guard</b> · session key on <b>ask</b> only · <b>stdio</b> + progress console</div>
+</body>
+</html>

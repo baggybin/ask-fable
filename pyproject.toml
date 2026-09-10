@@ -1,0 +1,55 @@
+[project]
+name = "ask-fable"
+version = "0.14.0"
+description = "Portable MCP reasoning server for coding agents — Claude Code, OpenCode, Kimi Code, Grok, Cursor, Codex, and any MCP client. Fable, Opus 5, and multi-model councils."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "baggybin" }]
+keywords = [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "claude-fable",
+    "claude-opus",
+    "claude-code",
+    "opencode",
+    "kimi-code",
+    "grok",
+    "cursor",
+    "anthropic",
+    "reasoning",
+    "councils",
+    "multi-agent",
+    "ai-agents",
+]
+dependencies = [
+    "mcp>=1.0,<2",
+    "claude-agent-sdk>=0.2,<0.3",
+]
+
+# NOTE: salient-core is deliberately NOT declared as an extra — it is unpublished,
+# and uv resolves all extras when locking, so declaring it breaks `uv run`/`uv sync`
+# for everyone. The guard imports it opportunistically at runtime when present.
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff"]
+
+[project.scripts]
+ask-fable = "ask_fable.__main__:_main"
+
+[build-system]
+requires = ["setuptools>=77.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["F", "B", "C4", "I", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

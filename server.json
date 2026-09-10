@@ -1,0 +1,22 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.baggybin/ask-fable",
+  "title": "ask-fable",
+  "description": "Portable MCP server for coding agents: Fable, Opus 5, and multi-model councils.",
+  "repository": {
+    "url": "https://github.com/baggybin/ask-fable",
+    "source": "github"
+  },
+  "version": "0.14.0",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "ask-fable",
+      "version": "0.14.0",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+graph TD
+    Start["def ask_debate(Q, proposer, opponent, rounds):"] --> Turn1["claims = call_model(proposer, Q, 'decompose_claims')"]
+    Turn1 --> Loop["for round in 1..rounds:"]
+    Loop --> OppTurn["contests = call_model(opponent, claims, 'contest_or_concede')"]
+    OppTurn --> AllConceded{"all_conceded?"}
+    AllConceded -- Yes --> ResConceded["resolution = 'conceded'"] --> EndDebate
+    AllConceded -- No --> PropTurn["claims = call_model(proposer, contests, 'revise')"]
+    PropTurn --> CheckRounds{"round < rounds?"}
+    CheckRounds -- Yes --> Loop
+    CheckRounds -- No --> AdjTurn["ruling = call_model('fable', claims+contests, 'adjudicate')"]
+    AdjTurn --> DecideRes["if agreement: resolution = 'converged'<br>elif stubborn: resolution = 'stalemate'<br>else: resolution = 'adjudicated'"]
+    DecideRes --> EndDebate
+    EndDebate --> Return["return resolution, ruling, decisive_argument"]
+
+    classDef func fill:#f9f,stroke:#333,stroke-width:2px;
+    class Start func;

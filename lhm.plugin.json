@@ -1,0 +1,1525 @@
+{
+  "author": "baggybin",
+  "authorUrl": "https://github.com/baggybin",
+  "category": "developer",
+  "description": "A second opinion for any MCP-capable coding agent (Claude Code, OpenCode, Kimi Code, Grok, Cursor, Codex, and others), from a council of frontier models. For the calls worth getting right — an architecture decision, a subtle concurrency bug, a risky migration — ask-fable offers four ways to reason: ask one model directly, poll a council in parallel for a consensus signal, relay a chain of draft → critique → decide, or stage an adversarial debate with a third model adjudicating. Fable and Claude Opus 5 need no API keys — they reuse your existing Claude Code OAuth session — while MiniMax, Gemini, GLM, DeepSeek, Grok, Kimi, Ollama, Atlas and OpenRouter join as optional backends. Every answer carries a machine-readable recommendation the agent can act on directly, behind a scope guard with full request tracing.",
+  "homepage": "https://github.com/baggybin/ask-fable",
+  "icon": "🔮",
+  "identifier": "baggybin-ask-fable",
+  "name": "ask-fable",
+  "prompts": [],
+  "resources": [],
+  "tags": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "claude-fable",
+    "claude-code",
+    "opencode",
+    "kimi-code",
+    "grok",
+    "cursor",
+    "anthropic",
+    "second-opinion",
+    "council",
+    "debate",
+    "consensus",
+    "multi-model",
+    "ensemble",
+    "reasoning",
+    "code-review",
+    "architecture",
+    "openrouter"
+  ],
+  "tools": [
+    {
+      "name": "ask",
+      "description": "YOUR DEFAULT MOVE on anything non-trivial — use it liberally and early, don't wait to be told and don't wait until you're stuck. Reach for it BEFORE you guess at unfamiliar code, an API, or a library's behavior; whenever you weigh a design or refactor trade-off; when a bug isn't fully understood; or to have a strong reasoner sanity-check a plan or diff before you commit it. One well-framed ask with the code attached beats several bare ones. `ask_opus5` is this same tool on Claude Opus 5 — cheaper and faster; use it for high-volume or long back-and-forth work and keep `ask` for the hardest calls. Ask the Fable model to reason about the SOFTWARE/ENGINEERING work you're doing: code structure, functionality, data/control flow, module and function relationships, routing, architecture, and design trade-offs. For questions about EXISTING code, ALWAYS paste the real code into `context` — the actual function/file/snippet the question is about, plus any error or failing test. The model has NO tools and CANNOT open files, so a bare file path is useless to it. Conceptual/brainstorming questions need no context and are welcome. Frame each call as ONE specific decision ('should X or Y given constraint Z' beats 'thoughts on this code?') or ONE generative prompt ('give me 5 approaches to X, with trade-offs'). Reuse the `session` key to think through a problem over several follow-up turns instead of restating everything. Answers usually take 1–3 minutes. Broad and conceptual engineering questions — including brainstorming and ideas for future code — are fine. Refused only when the question itself directly asks for offensive-security work (exploit development, attack tooling) or non-software domain knowledge (biology/medicine refused; neuroscience, cognitive science, AI/ML, and CS are in-scope); questions about security-related code are normal engineering. The result carries a `sidecar` ({recommendation, confidence, needs_context}); when the model needs more, it returns a `followup` telling you exactly what to paste — paste those (or `context_write` them and pass `context_ref`) and re-ask on the SAME `session`, but first check `followup.likely_already_pasted` and RE-READ your own paste rather than resending it. A `context_exhausted` status means the model still can't answer after repeated tries — stop re-asking and use your own judgment.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "A specific question about concrete software code/architecture (structure, functionality, data flow, module/function relationships, routing)."
+          },
+          "context": {
+            "type": "string",
+            "default": "",
+            "description": "Optional code snippets, file paths, or structural context."
+          },
+          "context_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "Key(s) of context previously saved with `context_write` to pull in and prepend to `context` — so you paste a big codebase context ONCE and reference it by key across many asks instead of re-pasting. Missing keys are reported, not fatal."
+          },
+          "session": {
+            "type": "string",
+            "default": "default",
+            "description": "Conversation key. Reuse it to ask follow-ups (Fable keeps context); use a new key or reset=true to start a fresh topic."
+          },
+          "reset": {
+            "type": "boolean",
+            "default": false,
+            "description": "Dump+clear this session before asking, starting a fresh conversation."
+          },
+          "trusted": {
+            "type": "boolean",
+            "default": false,
+            "description": "Operator-authorized. When true, the prohibited-use denylist runs in log-only mode: security vocabulary in the question is audited but does not block. Use for legitimate security-engineering work (PoC analysis, CVE research, binary hardening review) where the question genuinely needs security terms. The operator is responsible for authorizing this flag."
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ask_fable_help",
+      "description": "FREE, local and instant — no model call, no cost, no network. Returns the part of this server's manual that does NOT fit in the standing instructions (harnesses truncate those at ~2 KB). Call it when: a call came back `status:\"refused\"` (topic `refused` — reframe, never resend the same question); you're about to re-paste context you already sent (topic `context` — the shared bus, paste once and reference by key); you're configuring an Ollama / Atlas / OpenRouter council (topic `setup`); or you want the full tool menu with the model tokens usable in councils, chains and debates (topic `tools`). `all` returns everything. Cheap enough to call speculatively — prefer it over guessing at an argument.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string",
+            "enum": [
+              "refused",
+              "context",
+              "setup",
+              "tools",
+              "all"
+            ],
+            "description": "Which part of the manual to return. `refused`: what to do with a status:\"refused\" result (reframe, never resend). `context`: the shared context bus — paste once, reference by key. `setup`: configuring Ollama/Atlas/OpenRouter councils. `tools`: the full tool menu and the model tokens usable in councils/chains/debates. Defaults to `all`."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ask_opus5",
+      "description": "The same guarded, multi-turn reasoning as `ask`, but on Claude Opus 5 (claude-opus-5) instead of Fable — identical arguments, identical result shape (sidecar, followup, context_exhausted), same `session`/`reset` conversation model. Reach for it exactly where you'd reach for `ask`: before guessing at unfamiliar code, when weighing a design trade-off, or to sanity-check a plan or diff. WHICH ONE: Opus 5 is roughly half Fable's price and noticeably faster, so prefer it for high-volume or latency-sensitive reasoning and for long back-and-forth sessions; keep `ask` (Fable) for the hardest, most consequential single calls. Running BOTH on the same question is a cheap two-model cross-check without paying for a full council. Sessions are namespaced per tool: the same `session` key on `ask` and `ask_opus5` is two independent conversations (use `reset_session(model='opus5')` to clear this one). The model has NO tools and CANNOT open files — paste the real code into `context` (or point at it with `context_ref`). Same scope as `ask`: broad and conceptual engineering questions, including brainstorming and ideas for future code, are fine; refused only for direct offensive-security asks (exploit development, attack tooling) and non-software domain knowledge (biology/medicine refused; neuroscience, cognitive science, AI/ML, and CS are in-scope). Opus 5 also works as the `opus` token in every multi-model mode — `ask_council` member or `synthesizer`, `ask_chain` stage, `ask_debate` proposer/opponent/adjudicator.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "A specific question about concrete software code/architecture (structure, functionality, data flow, module/function relationships, routing)."
+          },
+          "context": {
+            "type": "string",
+            "default": "",
+            "description": "Optional code snippets, file paths, or structural context."
+          },
+          "context_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "Key(s) of context previously saved with `context_write` to pull in and prepend to `context` — so you paste a big codebase context ONCE and reference it by key across many asks instead of re-pasting. Missing keys are reported, not fatal."
+          },
+          "session": {
+            "type": "string",
+            "default": "default",
+            "description": "Conversation key. Reuse it to ask follow-ups (Opus 5 keeps context); use a new key or reset=true to start a fresh topic. Opus sessions are namespaced separately from `ask`'s Fable sessions, so the same key on both tools is two independent conversations."
+          },
+          "reset": {
+            "type": "boolean",
+            "default": false,
+            "description": "Dump+clear this session before asking, starting a fresh conversation."
+          },
+          "trusted": {
+            "type": "boolean",
+            "default": false,
+            "description": "Operator-authorized. When true, the prohibited-use denylist runs in log-only mode: security vocabulary in the question is audited but does not block. Use for legitimate security-engineering work (PoC analysis, CVE research, binary hardening review) where the question genuinely needs security terms. The operator is responsible for authorizing this flag."
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ask_m3",
+      "description": "Ask the MiniMax model (MiniMax-M3) — on its own, independent of Fable — to reason about the SOFTWARE/ENGINEERING work you're doing: code structure, functionality, data/control flow, module and function relationships, routing, architecture, and design trade-offs. Broad and conceptual engineering questions (including brainstorming/ideas for future code) are fine — add a snippet or file path in `context` when the question is about existing code. Single-turn. Direct offensive-security asks (exploit development, attack tooling) and non-software domain knowledge (biology/medicine refused; neuroscience, cognitive science, AI/ML, and CS are in-scope) are refused. Use `ask` for Fable, or `ask_council` to ask both and get a synthesized answer.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "A specific software/engineering question to ask MiniMax (MiniMax-M3) on its own."
+          },
+          "context": {
+            "type": "string",
+            "default": "",
+            "description": "Optional code snippets, file paths, or structural context."
+          },
+          "context_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "Key(s) of context saved with `context_write` to pull in and prepend to `context` — paste a big context ONCE, reference it by key here. Missing keys are reported, not fatal."
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ask_glm",
+      "description": "Ask the GLM model — on its own, independent of Fable — to reason about the SOFTWARE/ENGINEERING work you're doing: code structure, functionality, data/control flow, module and function relationships, routing, architecture, and design trade-offs. Broad and conceptual engineering questions (including brainstorming/ideas for future code) are fine — add a snippet or file path in `context` when the question is about existing code. Single-turn. Served by Z.ai's Anthropic-compatible endpoint (GLM-5.2) when ASK_FABLE_GLM_API_KEY is set; otherwise it falls back to Atlas-hosted GLM-5.3 on the Atlas key, and is only reported as not_configured when neither is available. Direct offensive-security asks (exploit development, attack tooling) and non-software domain knowledge (biology/medicine refused; neuroscience, cognitive science, AI/ML, and CS are in-scope) are refused. Use `ask` for Fable, `ask_m3` for MiniMax, or `ask_council` to ask several and get a synthesized answer.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "A specific software/engineering question to ask GLM (GLM-5.2) on its own."
+          },
+          "context": {
+            "type": "string",
+            "default": "",
+            "description": "Optional code snippets, file paths, or structural context."
+          },
+          "context_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "Key(s) of context saved with `context_write` to pull in and prepend to `context` — paste a big context ONCE, reference it by key here. Missing keys are reported, not fatal."
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ask_deepseek",
+      "description": "Ask the DeepSeek model (deepseek-v4-pro, via DeepSeek's Anthropic-compatible endpoint) — on its own, independent of Fable — to reason about the SOFTWARE/ENGINEERING work you're doing: code structure, functionality, data/control flow, module and function relationships, routing, architecture, and design trade-offs. Cheap direct API — prefer it (like `ask_m3`/`ask_glm`) over pricier cloud models for a quick independent opinion. Broad and conceptual engineering questions (including brainstorming/ideas for future code) are fine — add a snippet or file path in `context` when the question is about existing code. Single-turn. Requires ASK_FABLE_DEEPSEEK_API_KEY configured on the server (reported as not_configured otherwise). Direct offensive-security asks (exploit development, attack tooling) and non-software domain knowledge (biology/medicine refused; neuroscience, cognitive science, AI/ML, and CS are in-scope) are refused. Use `ask` for Fable, `ask_m3` for MiniMax, `ask_glm` for GLM, or `ask_council` to ask several and get a synthesized answer.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "A specific software/engineering question to ask DeepSeek (deepseek-v4-pro) on its own."
+          },
+          "context": {
+            "type": "string",
+            "default": "",
+            "description": "Optional code snippets, file paths, or structural context."
+          },
+          "context_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "Key(s) of context saved with `context_write` to pull in and prepend to `context` — paste a big context ONCE, reference it by key here. Missing keys are reported, not fatal."
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ask_gemini",
+      "description": "Ask Google's Gemini model (Gemini 3.1 Pro, via the local `agy` CLI) — on its own, independent of Fable — to reason about the SOFTWARE/ENGINEERING work you're doing: code structure, functionality, data/control flow, module and function relationships, routing, architecture, and design trade-offs. Broad and conceptual engineering questions (including brainstorming/ideas for future code) are fine — add a snippet or file path in `context` when the question is about existing code. Single-turn. Requires the `agy` CLI installed and signed in on the server (reported as binary_missing otherwise). Direct offensive-security asks (exploit development, attack tooling) and non-software domain knowledge (biology/medicine refused; neuroscience, cognitive science, AI/ML, and CS are in-scope) are refused. Use `ask` for Fable, `ask_m3` for MiniMax, `ask_glm` for GLM, or `ask_council` to ask several and get a synthesized answer.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "A specific software/engineering question to ask Gemini (Gemini 3.1 Pro) on its own."
+          },
+          "context": {
+            "type": "string",
+            "default": "",
+            "description": "Optional code snippets, file paths, or structural context."
+          },
+          "context_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "Key(s) of context saved with `context_write` to pull in and prepend to `context` — paste a big context ONCE, reference it by key here. Missing keys are reported, not fatal."
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ask_codex",
+      "description": "Ask OpenAI's model (GPT-5.6 Sol, via the local `codex` CLI in non-interactive `codex exec` mode) — on its own, independent of Fable — to reason about the SOFTWARE/ENGINEERING work you're doing: code structure, functionality, data/control flow, module and function relationships, routing, architecture, and design trade-offs. Broad and conceptual engineering questions (including brainstorming/ideas for future code) are fine — add a snippet or file path in `context` when the question is about existing code. Runs hermetically and read-only (it can't see or touch your repo — put the code it needs in `context`). Single-turn. Requires the `codex` CLI installed and logged in on the server (reported as binary_missing otherwise). Direct offensive-security asks (exploit development, attack tooling) and non-software domain knowledge (biology/medicine refused; neuroscience, cognitive science, AI/ML, and CS are in-scope) are refused. Use `ask` for Fable, `ask_m3` for MiniMax, `ask_gemini` for Gemini, `ask_glm` for GLM, or `ask_council` to ask several and get a synthesized answer.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "A specific software/engineering question to ask Codex (GPT-5.6 Sol) on its own."
+          },
+          "context": {
+            "type": "string",
+            "default": "",
+            "description": "Optional code snippets, file paths, or structural context."
+          },
+          "context_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "Key(s) of context saved with `context_write` to pull in and prepend to `context` — paste a big context ONCE, reference it by key here. Missing keys are reported, not fatal."
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ask_grok",
+      "description": "Ask xAI's Grok model (grok-4.6 by default, via the local `grok` CLI in single-turn `-p` mode) — on its own, independent of Fable — to reason about the SOFTWARE/ENGINEERING work you're doing: code structure, functionality, data/control flow, module and function relationships, routing, architecture, and design trade-offs. PREFER THIS over `ask_atlas` with `xai/grok-*` whenever the `grok` binary is installed (uses your `grok login` session; no Atlas API key). Runs hermetically (tools disabled; put the code it needs in `context`). Single-turn. Requires the `grok` CLI installed and logged in on the server (reported as binary_missing otherwise). Broad and conceptual engineering questions (including brainstorming/ideas for future code) are fine. Direct offensive-security asks (exploit development, attack tooling) and non-software domain knowledge (biology/medicine refused; neuroscience, cognitive science, AI/ML, and CS are in-scope) are refused. Use `ask` for Fable, or `ask_council` with model token `grok` to include Grok in a multi-model panel.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "A specific software/engineering question to ask Grok (grok-4.6) on its own via the local `grok` CLI."
+          },
+          "context": {
+            "type": "string",
+            "default": "",
+            "description": "Optional code snippets, file paths, or structural context."
+          },
+          "context_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "Key(s) of context saved with `context_write` to pull in and prepend to `context` — paste a big context ONCE, reference it by key here. Missing keys are reported, not fatal."
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ask_kimi",
+      "description": "Ask Moonshot's Kimi model (kimi-code/k3 by default, via the local `kimi` CLI in single-turn mode) — on its own, independent of Fable — to reason about the SOFTWARE/ENGINEERING work you're doing: code structure, functionality, data/control flow, module and function relationships, routing, architecture, and design trade-offs. PREFER THIS over `ask_atlas` with `moonshotai/kimi-*` whenever the `kimi` binary is installed: it runs on your Kimi Code subscription instead of per-token Atlas billing. NOTE the context caveat: k3 is a 1M-context model, but this CLI takes the prompt as a single argv value, which the kernel caps near 131k bytes — larger prompts are refused with a pointer to `ask_atlas` ('moonshotai/kimi-k3'), which has no such limit. The turn is sandboxed to pure text reasoning — the model has NO filesystem or tool access, so put the real code in `context`. Single-turn. Requires the `kimi` CLI on PATH and a completed `kimi login` (reported as binary_missing / not_configured otherwise). Direct offensive-security asks (exploit development, attack tooling) and non-software domain knowledge (biology/medicine refused; neuroscience, cognitive science, AI/ML, and CS are in-scope) are refused. Use `ask` for Fable, `ask_m3` for MiniMax, or `ask_council` to ask several and get a synthesized answer.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "A specific software/engineering question to ask Kimi (kimi-code/k3) on its own via the local `kimi` CLI."
+          },
+          "context": {
+            "type": "string",
+            "default": "",
+            "description": "Optional code snippets, file paths, or structural context."
+          },
+          "context_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "Key(s) of context saved with `context_write` to pull in and prepend to `context` — paste a big context ONCE, reference it by key here. Missing keys are reported, not fatal."
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ask_council",
+      "description": "DIRECTIONAL — reserve this for a genuinely contentious or HARD-TO-REVERSE decision (architecture, concurrency, data model, public API, migration) where a single opinion isn't enough and you want several models cross-checked, or for divergent brainstorming where you want independent idea sets merged without losing distinct options. It's slower and heavier than `ask`, so DON'T reach for it on routine questions — default to `ask`, and use at most one council call per problem. Check `quorum`/`degraded` in the result: a 1-of-N answer is one opinion, not consensus. Ask several models at once the same SOFTWARE/ENGINEERING question, then get back one answer that Fable synthesizes by reconciling all of them (each raw answer is also returned under `sources`). By default asks Fable (whichever id is newest) + MiniMax (MiniMax-M3), plus DeepSeek (deepseek-v4-pro) when ASK_FABLE_DEEPSEEK_API_KEY is configured — cheap direct models are preferred and consulted first. Pass `models` to choose from ['fable','fable51','opus','deepseek','minimax','glm','gemini','codex','grok','kimi'] ('fable' tracks the newest Fable automatically and 'fable51' pins claude-fable-5-1 even after it stops being newest — they are the same model today, so naming both buys you nothing; 'opus' is Claude Opus 5 on the same OAuth session as Fable — always available, half the price; 'gemini'/'codex'/'grok'/'kimi' need their local CLIs; 'glm'/'deepseek' need API keys configured on the server). You can also add Ollama Cloud models as 'ollama:<model>' tokens (e.g. 'ollama:qwen3-coder:480b-cloud', 'ollama:nemotron-3-ultra:cloud'); these are reached via a local signed-in `ollama` daemon by default (reported+skipped if unreachable). The group token 'twin' (aka 'twin flames') expands to BOTH Anthropic reasoners at once — fable + opus — so models=['twin'] is a dual Fable/Opus 5 invocation and models=['twin','minimax'] adds a third voice to it. Both ride the OAuth session, so it needs no provider keys and is the cheapest real second opinion available. Instead of listing `models`, you can pass a named `tier`: 'default' (fable+minimax, +deepseek when its key is configured), 'twin' (the twin flames, fable+opus), 'middle' (all of the above +opus+glm+gemini+codex+grok+kimi, cheap models first), or 'full' (+the configured Ollama Cloud models). The result carries a `consensus` signal ('strong' | 'partial' | 'divergent' | 'unknown') and `material_disagreement` computed from the panelists' recommendations, and each entry in `sources` shows that model's `recommendation` — so you can see WHO endorsed what, not just the merged answer. Panel answers are anonymized to the synthesizer to blunt self-preference bias. Pass `synthesizer` to have a different model adjudicate the panel (default 'fable'; e.g. 'opus' = Claude Opus 5, 'codex'/'gpt' = GPT-5.6 Sol via the local CLI, or 'atlas:openai/gpt-5.6-sol') — it falls back to Fable when unavailable or failing, and the result's `synthesis` block reports what actually ran. Same scope as `ask`: broad and conceptual engineering questions (including brainstorming) are fine; direct offensive-security asks and non-software domain knowledge (biology/medicine refused; neuroscience, cognitive science, AI/ML, and CS are in-scope) are refused.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "A specific software/engineering question to ask the selected models; Fable then synthesizes their answers into one."
+          },
+          "context": {
+            "type": "string",
+            "default": "",
+            "description": "Optional code snippets, file paths, or structural context (shared by all models)."
+          },
+          "context_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "Key(s) of context saved with `context_write` to pull in and prepend to `context` — paste a big context ONCE, reference it by key here. Missing keys are reported, not fatal."
+          },
+          "session": {
+            "type": "string",
+            "description": "Optional coordination key for the cross-agent hub (`session_list` / `session_peek`). Reuse the same key across agents working the same decision so turns group together. Defaults to the tool name (`ask_council` / `ask_chain` / `ask_debate` / …) when omitted."
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "fable",
+                    "fable51",
+                    "opus",
+                    "deepseek",
+                    "minimax",
+                    "glm",
+                    "gemini",
+                    "codex",
+                    "grok",
+                    "kimi",
+                    "claude-fable-5-1",
+                    "claude-opus-5",
+                    "fable-5.1",
+                    "fable-51",
+                    "fable5.1",
+                    "gpt",
+                    "m3",
+                    "opus-5",
+                    "opus5",
+                    "xai",
+                    "twin",
+                    "twin flame",
+                    "twin flames",
+                    "twin-flame",
+                    "twin-flames",
+                    "twin_flame",
+                    "twin_flames",
+                    "twinflame",
+                    "twinflames",
+                    "twins"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "pattern": "^ollama:.+"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^atlas:.+"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^openrouter:.+"
+                }
+              ]
+            },
+            "description": "Explicit list of models to ask, from ['fable','opus','deepseek','minimax','glm','gemini','codex','grok','kimi'] (aliases: 'm3' = minimax, 'gpt' = codex, 'xai' = grok, 'opus5' = opus), plus any 'ollama:<model>' cloud token (e.g. 'ollama:kimi-k2.7-code:cloud') or 'atlas:<model-id>' token (e.g. 'atlas:zai-org/glm-5.2'). One entry may be the group token 'twin' (aka 'twin flames'), which expands to BOTH Anthropic reasoners — fable + opus — on the one OAuth session, so ['twin'] is a dual Fable/Opus 5 invocation and ['twin','minimax'] adds a third voice to it. Overrides `tier` when given. 'glm'/'deepseek', 'ollama:*' and 'atlas:*' require API keys configured on the server; unconfigured ones are reported and skipped, not fatal."
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "default",
+              "twin",
+              "middle",
+              "full"
+            ],
+            "default": "default",
+            "description": "Named council preset (used when `models` is omitted): 'default' = fable+minimax, +deepseek when its API key is configured; 'twin' = the twin flames, fable+opus — a dual Fable/Opus 5 invocation needing no provider keys at all; 'middle' = +opus+glm+gemini+codex+grok+kimi (cheap models first); 'full' = +the configured Ollama Cloud models (ASK_FABLE_OLLAMA_COUNCIL)."
+          },
+          "synthesizer": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "fable",
+                  "fable51",
+                  "opus",
+                  "deepseek",
+                  "minimax",
+                  "glm",
+                  "gemini",
+                  "codex",
+                  "grok",
+                  "kimi",
+                  "claude-fable-5-1",
+                  "claude-opus-5",
+                  "fable-5.1",
+                  "fable-51",
+                  "fable5.1",
+                  "gpt",
+                  "m3",
+                  "opus-5",
+                  "opus5",
+                  "xai"
+                ]
+              },
+              {
+                "type": "string",
+                "pattern": "^ollama:.+"
+              },
+              {
+                "type": "string",
+                "pattern": "^atlas:.+"
+              },
+              {
+                "type": "string",
+                "pattern": "^openrouter:.+"
+              }
+            ],
+            "description": "Model that reconciles the panel answers into one (default 'fable'). Any council token works: 'opus' (Claude Opus 5 — cheaper and faster than Fable), 'codex' (alias 'gpt', GPT-5.6 Sol via the local CLI), 'atlas:openai/gpt-5.6-sol', 'ollama:<model>', … It may also be a panel member — its own answer is anonymized and read last. If it is unavailable or fails, synthesis falls back to Fable (see `synthesis` in the result)."
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ask_chain",
+      "description": "DIRECTIONAL, SEQUENTIAL — the relay counterpart to `ask_council`. Where the council asks N models the SAME question in parallel and synthesizes their independent answers ('what's true?'), the chain threads a question through an ORDERED pipeline where each stage refines the last ('make this answer better'). The operator sets the order as a `pipeline` string like 'm3 > glm > deepseek > fable' (or an ordered `models` array). Stage 1 drafts; each middle stage is told to solve independently and CRITIQUE the prior draft before extending it (an anti-anchoring guard); the final stage DECIDES, seeing all prior stages as anonymized peers. Best for two things a council can't do: cost-tiered escalation (a cheap/fast model does the legwork, Fable finalizes) and explicit draft → red-team → decide pipelines. Costs MORE latency than a council (stages run sequentially, not in parallel), so reserve it for when the ordered refinement is the point. Draft → critique → refine is also a natural IDEATION pipeline: a cheap model brainstorms broadly, later stages prune and sharpen the ideas. Order matters and repeats are allowed ('fable > glm > fable' = draft, critique, re-decide). A mid-chain model that refuses/errors is skipped (recorded); if the final stage fails, Fable synthesizes the survivors. The result carries a `recommendation_drift` trail and `material_drift` flag — the chain analogue of the council's consensus signal — so you can see whether the answer was refined or just rubber-stamped. Same scope as `ask`: broad and conceptual engineering questions (including brainstorming) are fine; direct offensive-security asks and non-software domain knowledge (biology/medicine refused; neuroscience, cognitive science, AI/ML, and CS are in-scope) are refused. Aliases: 'm3' = minimax, 'opus5' = opus. Any stage can be 'opus' (Claude Opus 5) — a cheaper, faster terminus than Fable, e.g. 'm3 > opus'. The group token 'twin' (aka 'twin flames') expands in place to two stages, fable then opus, so 'm3 > twin' is a cheap draft finished by both Anthropic reasoners in turn. Default pipeline if none given: minimax > fable.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "A specific software/engineering question to thread through the pipeline."
+          },
+          "context": {
+            "type": "string",
+            "default": "",
+            "description": "Optional code snippets, file paths, or structural context (seen by every stage)."
+          },
+          "context_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "Key(s) of context saved with `context_write` to pull in and prepend to `context`."
+          },
+          "session": {
+            "type": "string",
+            "description": "Optional coordination key for the cross-agent hub (`session_list` / `session_peek`). Reuse the same key across agents working the same decision so turns group together. Defaults to the tool name (`ask_council` / `ask_chain` / `ask_debate` / …) when omitted."
+          },
+          "pipeline": {
+            "type": "string",
+            "description": "The ordered pipeline as a string, e.g. 'm3 > glm > deepseek > fable'. Split on '>'. Order matters and repeats are allowed. Aliases: 'm3' = minimax. The group token 'twin' (aka 'twin flames') expands in place to two stages, fable then opus — positionally, so a member you also name elsewhere in the pipeline runs twice (repeats are legitimate here and are not collapsed). Ignored when `models` is given."
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^ollama:.+"
+                }
+              ]
+            },
+            "description": "The ordered pipeline as an array (alternative to `pipeline`), e.g. ['minimax','glm','fable']. Order-sensitive; duplicates allowed."
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ask_debate",
+      "description": "DIRECTIONAL, ADVERSARIAL — pit two models AGAINST each other over a structured claims ledger, then have a fresh third model adjudicate. Unlike `ask_council` (N models vote independently) or `ask_chain` (each stage refines the last), the debate makes one model PROPOSE a position decomposed into load-bearing claims, the other REFUTE each claim (concede or contest-with-a-concrete-failure-scenario), the proposer REVISE under fire, and an anonymized adjudicator RULE on the merits. Reserve it for a genuinely contentious, hard-to-reverse SOFTWARE decision where you want the strongest case for AND against stress-tested — 'is this concurrency design sound', 'should we commit to approach X or Y' — not for questions with a clear answer. Pick the pair with `proposer` and `opponent` (e.g. proposer='fable', opponent='codex' for Fable vs GPT-5.6 Sol, or opponent='glm'); defaults to fable vs minimax. `adjudicator` picks who rules (default 'fable'; e.g. 'opus' for Claude Opus 5, or 'codex') — keep it off the debating pair so the ruling stays third-party. `rounds` is 1 (default) or 2 (adds a rebuttal pass). The server decides the outcome deterministically from the ledger — `resolution` is 'conceded' (opponent conceded everything), 'converged' (all contests resolved and both sides agree), 'adjudicated' (the adjudicator decided), or 'stalemate' (both dug in with nothing new → confidence is mechanically downgraded). Costs up to four sequential model calls, so it's the most expensive mode — use it sparingly. Degrades to a single-critic pass when the opponent is unconfigured. Same scope as `ask`: broad and conceptual engineering questions are fine; direct offensive-security asks and non-software domain knowledge (biology/medicine refused; neuroscience, cognitive science, AI/ML, and CS are in-scope) are refused. Aliases: 'm3' = minimax, 'gpt' = codex, 'opus5' = opus.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "A contentious, hard-to-reverse software/engineering decision to debate (e.g. 'is this concurrency design sound?', 'approach X or Y?')."
+          },
+          "context": {
+            "type": "string",
+            "default": "",
+            "description": "Optional code snippets, file paths, or structural context (seen by both sides)."
+          },
+          "context_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "Key(s) of context saved with `context_write` to pull in and prepend to `context`."
+          },
+          "session": {
+            "type": "string",
+            "description": "Optional coordination key for the cross-agent hub (`session_list` / `session_peek`). Reuse the same key across agents working the same decision so turns group together. Defaults to the tool name (`ask_council` / `ask_chain` / `ask_debate` / …) when omitted."
+          },
+          "proposer": {
+            "type": "string",
+            "default": "fable",
+            "description": "Model that proposes the position (default 'fable'). Aliases: 'm3'=minimax, 'gpt'=codex."
+          },
+          "opponent": {
+            "type": "string",
+            "default": "minimax",
+            "description": "Model that refutes it (default 'minimax'). Try 'codex' (GPT-5.6 Sol) or 'glm'."
+          },
+          "adjudicator": {
+            "type": "string",
+            "default": "fable",
+            "description": "Model that rules on the contested claims (default 'fable'; 'opus' for Claude Opus 5, 'codex' for GPT-5.6 Sol, …). It sees the ledger anonymized. Any council token works; keep it off the debating pair so the ruling stays third-party."
+          },
+          "rounds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2,
+            "default": 1,
+            "description": "1 (propose→refute→revise, default) or 2 (adds a rebuttal pass before adjudication)."
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ask_ollama",
+      "description": "Ask a single Ollama Cloud model — on its own — to reason about the SOFTWARE/ENGINEERING work you're doing: code structure, functionality, data/control flow, module and function relationships, routing, architecture, and design trade-offs. Pass `model` to pick a cloud model (e.g. 'kimi-k2.7-code:cloud', 'gpt-oss:120b-cloud', 'deepseek-v3.2:cloud'); omit it to use the server's default. Reached via a local signed-in `ollama` daemon by default (no API key needed). Single-turn. Broad and conceptual engineering questions (including brainstorming/ideas for future code) are fine — add a snippet or file path in `context` when the question is about existing code. Direct offensive-security asks (exploit development, attack tooling) and non-software domain knowledge (biology/medicine refused; neuroscience, cognitive science, AI/ML, and CS are in-scope) are refused. Use `ask_council` to mix Ollama models with Fable.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "A specific software/engineering question to ask a single Ollama Cloud model."
+          },
+          "context": {
+            "type": "string",
+            "default": "",
+            "description": "Optional code snippets, file paths, or structural context."
+          },
+          "context_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "Key(s) of context saved with `context_write` to pull in and prepend to `context` — paste a big context ONCE, reference it by key here. Missing keys are reported, not fatal."
+          },
+          "model": {
+            "type": "string",
+            "description": "Ollama Cloud model id (e.g. 'kimi-k2.7-code:cloud', 'gpt-oss:120b-cloud'). Omit to use the server's ASK_FABLE_OLLAMA_MODEL default."
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ask_ollama_council",
+      "description": "DIRECTIONAL — the Ollama-only counterpart to `ask_council`: reserve it for a contentious or hard-to-reverse decision you want several cloud models to cross-check, not for routine questions (default to `ask`; at most one council call per problem, and check `quorum`/`degraded` in the result). Ask several Ollama Cloud models the same SOFTWARE/ENGINEERING question at once, then get back one answer that Fable synthesizes by reconciling all of them (each raw answer is also returned under `sources`). Pass `models` as a list of cloud model ids (e.g. ['qwen3-coder:480b-cloud', 'nemotron-3-ultra:cloud','kimi-k2.7-code:cloud']); an 'ollama:' prefix is optional. Omit `models` to use the server's configured set (ASK_FABLE_OLLAMA_COUNCIL). Reached via a local signed-in `ollama` daemon by default (no API key needed). Use `ask_council` instead to mix Ollama models with Fable/MiniMax/GLM/DeepSeek in one council. Same scope as `ask`: broad and conceptual engineering questions (including brainstorming) are fine; direct offensive-security asks and non-software domain knowledge (biology/medicine refused; neuroscience, cognitive science, AI/ML, and CS are in-scope) are refused.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "A specific software/engineering question to ask several Ollama Cloud models; Fable then synthesizes their answers into one."
+          },
+          "context": {
+            "type": "string",
+            "default": "",
+            "description": "Optional code snippets, file paths, or structural context (shared by all models)."
+          },
+          "context_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "Key(s) of context saved with `context_write` to pull in and prepend to `context` — paste a big context ONCE, reference it by key here. Missing keys are reported, not fatal."
+          },
+          "session": {
+            "type": "string",
+            "description": "Optional coordination key for the cross-agent hub (`session_list` / `session_peek`). Reuse the same key across agents working the same decision so turns group together. Defaults to the tool name (`ask_council` / `ask_chain` / `ask_debate` / …) when omitted."
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Ollama Cloud model ids (e.g. ['kimi-k2.7-code:cloud', 'gpt-oss:120b-cloud']); an 'ollama:' prefix is optional. Omit to use the server's configured set (ASK_FABLE_OLLAMA_COUNCIL). Requires ASK_FABLE_OLLAMA_API_KEY on the server."
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ask_atlas",
+      "description": "Ask a single Atlas Cloud text model — on its own — to reason about the SOFTWARE/ENGINEERING work you're doing: code structure, functionality, data/control flow, module and function relationships, routing, architecture, and design trade-offs. Pass `model` to pick from 60+ models (e.g. 'xai/grok-4.6', 'openai/gpt-5.6-sol', 'anthropic/claude-opus-4.8', 'deepseek-ai/deepseek-v4-pro'); omit it to use the default. Pass `effort` (quick/standard/deep; default **deep** — max reasoning) to set the answer budget. REACH FOR THIS the first time an Atlas model is wanted: call `list_atlas_models(task=<the user's job>)`; use an accepted native selection when one is returned, or render its structured `picker` fallback, then call `ask_atlas` with the selected model and effort (the catalog endpoint is free — no tokens charged). PREFER `ask_grok` (local `grok` CLI) over Atlas for xAI Grok models when the binary is installed — `ask_atlas` with `xai/grok-*` auto-routes to the local CLI when available. Other Atlas models remain HTTP. Atlas models are ALSO reachable in `ask_council` / `ask_chain` / `ask_debate` as dynamic `atlas:<model>` tokens, e.g. 'atlas:xai/grok-4.6' (Grok tokens prefer the local CLI when present). OpenRouter models join the same way as 'openrouter:<model-id>'. Single-turn. Needs ASK_FABLE_ATLAS_API_KEY (or the ATLASCLOUD_API_KEY the Atlas Cloud MCP server already uses) for non-Grok models. Broad and conceptual engineering questions (including brainstorming/ideas for future code) are fine — add a snippet or file path in `context` when the question is about existing code. Direct offensive-security asks (exploit development, attack tooling) and non-software domain knowledge (biology/medicine refused; neuroscience, cognitive science, AI/ML, and CS are in-scope) are refused.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "A specific software/engineering question to ask an Atlas Cloud text model."
+          },
+          "context": {
+            "type": "string",
+            "default": "",
+            "description": "Optional code snippets, file paths, or structural context."
+          },
+          "context_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "Key(s) of context saved with `context_write` to pull in and prepend to `context` — paste a big context ONCE, reference it by key here. Missing keys are reported, not fatal."
+          },
+          "model": {
+            "type": "string",
+            "description": "Atlas Cloud model id (e.g. 'xai/grok-4.6', 'openai/gpt-5.6-sol', 'anthropic/claude-opus-4.8'). Omit to use the server's default. Call `list_atlas_models` to see the live catalog with pricing, then offer the user a selection menu."
+          },
+          "effort": {
+            "type": "string",
+            "enum": [
+              "quick",
+              "standard",
+              "deep"
+            ],
+            "default": "deep",
+            "description": "Answer budget / reasoning depth (default 'deep' — max reasoning). 'quick' (~1k tokens, concise), 'standard' (~4k tokens), 'deep' (~16k tokens, opportunistically sends reasoning_effort:high). Atlas has no documented reasoning_effort, so effort maps to max_tokens + timeout + a prompt nudge."
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ask_atlas_council",
+      "description": "DIRECTIONAL — the Atlas-only counterpart to `ask_council`, with GPT-5.6 Sol as the default adjudicator: reserve it for a contentious or hard-to-reverse decision you want several Atlas Cloud models to cross-check, not for routine questions (default to `ask`; at most one council call per problem, and check `quorum`/`degraded` in the result). Ask several Atlas Cloud models the same SOFTWARE/ENGINEERING question at once, then get back one answer the adjudicator synthesizes by reconciling all of them (each raw answer is also returned under `sources`). The adjudicator defaults GPT-first: the local `codex` CLI (GPT-5.6 Sol, no Atlas tokens) when installed, else Atlas-hosted 'openai/gpt-5.6-sol', else Fable — override with `synthesizer` (any council token) or persist a choice with `configure_atlas_council`; the result's `synthesis` block reports what actually adjudicated. Pass `models` as a list of Atlas model ids (e.g. ['zai-org/glm-5.2','deepseek-ai/deepseek-v4-pro', 'moonshotai/kimi-k2']; an 'atlas:' prefix is optional). Omit `models` to use the configured set (configure_atlas_council / ASK_FABLE_ATLAS_COUNCIL), else 3 featured catalog models, one per provider. Needs ASK_FABLE_ATLAS_API_KEY (or the ATLASCLOUD_API_KEY the Atlas Cloud MCP server already uses); xai/grok-* members reroute to the local `grok` CLI when installed, no key needed. Use `ask_council` instead to mix Atlas models with Fable/MiniMax/GLM/DeepSeek in one council. Same scope as `ask`: broad and conceptual engineering questions (including brainstorming) are fine; direct offensive-security asks and non-software domain knowledge (biology/medicine refused; neuroscience, cognitive science, AI/ML, and CS are in-scope) are refused.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "A specific software/engineering question to ask several Atlas Cloud models; the adjudicator (GPT-5.6 Sol by default) then synthesizes their answers into one."
+          },
+          "context": {
+            "type": "string",
+            "default": "",
+            "description": "Optional code snippets, file paths, or structural context (shared by all models)."
+          },
+          "context_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "Key(s) of context saved with `context_write` to pull in and prepend to `context` — paste a big context ONCE, reference it by key here. Missing keys are reported, not fatal."
+          },
+          "session": {
+            "type": "string",
+            "description": "Optional coordination key for the cross-agent hub (`session_list` / `session_peek`). Reuse the same key across agents working the same decision so turns group together. Defaults to the tool name (`ask_council` / `ask_chain` / `ask_debate` / …) when omitted."
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Atlas Cloud model ids (e.g. ['zai-org/glm-5.2', 'deepseek-ai/deepseek-v4-pro']); an 'atlas:' prefix is optional. Omit to use the configured set (configure_atlas_council / ASK_FABLE_ATLAS_COUNCIL), else 3 featured catalog models, one per provider. Requires an Atlas API key on the server (xai/grok-* members can reroute to the local grok CLI without one)."
+          },
+          "synthesizer": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "fable",
+                  "fable51",
+                  "opus",
+                  "deepseek",
+                  "minimax",
+                  "glm",
+                  "gemini",
+                  "codex",
+                  "grok",
+                  "kimi",
+                  "claude-fable-5-1",
+                  "claude-opus-5",
+                  "fable-5.1",
+                  "fable-51",
+                  "fable5.1",
+                  "gpt",
+                  "m3",
+                  "opus-5",
+                  "opus5",
+                  "xai"
+                ]
+              },
+              {
+                "type": "string",
+                "pattern": "^ollama:.+"
+              },
+              {
+                "type": "string",
+                "pattern": "^atlas:.+"
+              },
+              {
+                "type": "string",
+                "pattern": "^openrouter:.+"
+              }
+            ],
+            "description": "Model that reconciles the panel answers into one. Default ladder: the local codex CLI (GPT-5.6 Sol) when installed → 'atlas:openai/gpt-5.6-sol' when Atlas is configured → 'fable'. Falls back to Fable when the pick is unavailable or fails (see `synthesis` in the result)."
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ask_openrouter",
+      "description": "Ask ONE model on OpenRouter — a single gateway fronting ~400 models from every major lab (Anthropic, OpenAI, Google, DeepSeek, Meta, Qwen, Moonshot, xAI, Mistral, …) behind one API key. Use it to reach a model this server has no dedicated tool for, or to compare the same question across labs without configuring each provider separately. Guarded and single-turn, same scope rules as every other ask tool. PICK A MODEL FIRST: call `list_openrouter_models(task='…')` — the catalog is free and needs no key — then offer the user the ranked shortlist with its prices before spending anything. Omitting `model` uses the server default. `effort` is quick/standard/deep (default deep); because OpenRouter publishes each model's supported reasoning efforts, deep asks for the most the chosen model actually supports instead of guessing. COST: this bills the operator's OpenRouter credit per token, and the result reports the real dollar cost of the call. Prefer a dedicated tool when one exists for the same model — `ask` / `ask_opus5` (Claude on the operator's OAuth session, no per-token cost), `ask_grok`, `ask_kimi`, `ask_deepseek`. Grok and Kimi ids are rerouted to those local CLIs automatically when they are installed. Any model here also works in `ask_council`, `ask_chain`, and `ask_debate` as an 'openrouter:<model-id>' token.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "A specific software/engineering question to ask an OpenRouter model."
+          },
+          "context": {
+            "type": "string",
+            "default": "",
+            "description": "Optional code snippets, file paths, or structural context."
+          },
+          "context_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "Key(s) of context saved with `context_write` to pull in and prepend to `context` — paste a big context ONCE, reference it by key here. Missing keys are reported, not fatal."
+          },
+          "model": {
+            "type": "string",
+            "description": "OpenRouter model id (e.g. 'anthropic/claude-fable-5.1', 'openai/gpt-5.6-sol', 'deepseek/deepseek-v4-pro', 'google/gemini-3.8-flash'). Omit to use the server's default. Call `list_openrouter_models` to see the live catalog with pricing and per-model reasoning support, then offer the user a selection menu."
+          },
+          "effort": {
+            "type": "string",
+            "enum": [
+              "quick",
+              "standard",
+              "deep"
+            ],
+            "default": "deep",
+            "description": "Answer budget / reasoning depth (default 'deep' — max reasoning). 'quick' (~1k tokens, concise), 'standard' (~4k tokens), 'deep' (~16k tokens). Unlike Atlas, OpenRouter publishes each model's supported reasoning efforts, so 'deep' sends the highest effort the CHOSEN model actually accepts and omits the field entirely for non-reasoning models — no wasted probe request."
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ask_openrouter_council",
+      "description": "Ask SEVERAL OpenRouter models the same question in parallel, then have an adjudicator reconcile their answers into one. The point is cross-LAB diversity on a single API key: a panel of Claude + GPT + Gemini + DeepSeek disagrees in more useful ways than three models from one vendor, and you configure none of them separately. Same fan-out/synthesis contract and `consensus` signal as `ask_council`. `models` takes OpenRouter ids (the 'openrouter:' prefix is optional); omit it to use the configured set (`configure_openrouter_council`), else 3 featured catalog models, one per provider. The adjudicator defaults GPT-first: the local `codex` CLI when installed, else OpenRouter-hosted GPT-5.6 Sol, else Fable. COST: this is N billed calls plus a synthesis — reserve it for a contentious, hard-to-reverse decision, exactly as with `ask_council`. Grok and Kimi members reroute to the local CLIs when installed.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "A specific software/engineering question to ask several OpenRouter models; the adjudicator (GPT-5.6 Sol by default) then synthesizes their answers into one."
+          },
+          "context": {
+            "type": "string",
+            "default": "",
+            "description": "Optional code snippets, file paths, or structural context (shared by all models)."
+          },
+          "context_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "Key(s) of context saved with `context_write` to pull in and prepend to `context` — paste a big context ONCE, reference it by key here. Missing keys are reported, not fatal."
+          },
+          "session": {
+            "type": "string",
+            "description": "Optional coordination key for the cross-agent hub (`session_list` / `session_peek`). Reuse the same key across agents working the same decision so turns group together. Defaults to the tool name (`ask_council` / `ask_chain` / `ask_debate` / …) when omitted."
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "OpenRouter model ids (e.g. ['anthropic/claude-fable-5.1', 'deepseek/deepseek-v4-pro']); an 'openrouter:' prefix is optional. Omit to use the configured set (configure_openrouter_council / ASK_FABLE_OPENROUTER_COUNCIL), else 3 featured catalog models, one per provider. A panel spanning several labs is the point — one key, genuinely different reasoners."
+          },
+          "synthesizer": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "fable",
+                  "fable51",
+                  "opus",
+                  "deepseek",
+                  "minimax",
+                  "glm",
+                  "gemini",
+                  "codex",
+                  "grok",
+                  "kimi",
+                  "claude-fable-5-1",
+                  "claude-opus-5",
+                  "fable-5.1",
+                  "fable-51",
+                  "fable5.1",
+                  "gpt",
+                  "m3",
+                  "opus-5",
+                  "opus5",
+                  "xai"
+                ]
+              },
+              {
+                "type": "string",
+                "pattern": "^ollama:.+"
+              },
+              {
+                "type": "string",
+                "pattern": "^atlas:.+"
+              },
+              {
+                "type": "string",
+                "pattern": "^openrouter:.+"
+              }
+            ],
+            "description": "Model that reconciles the panel answers into one. Default ladder: the local codex CLI (GPT-5.6 Sol) when installed → 'openrouter:openai/gpt-5.6-sol' when OpenRouter is configured → 'fable'."
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "configure_openrouter_council",
+      "description": "Persist the default panel for `ask_openrouter_council` (and optionally its adjudicator) to the server's config file, so the choice survives restarts without anyone hand-editing an env var. Pass `models` (OpenRouter ids) and/or `synthesizer` (any council token, or a bare OpenRouter id). Call `list_openrouter_models` first and let the user pick — this writes a durable default on their behalf, so it should reflect their choice, not yours.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "models": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "OpenRouter model ids to persist as the default council (e.g. ['anthropic/claude-fable-5.1', 'openai/gpt-5.6-sol', 'deepseek/deepseek-v4-pro']). Call `list_openrouter_models` first."
+          },
+          "synthesizer": {
+            "type": "string",
+            "description": "Model that adjudicates the panel — any council token ('codex'/'gpt', 'fable', 'openrouter:<model-id>') or a bare OpenRouter id."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_openrouter_models",
+      "description": "List the live OpenRouter catalog — ~400 models with price per million tokens, context window, and which reasoning efforts each one accepts. FREE: the catalog endpoint needs no API key and costs nothing, so call it before `ask_openrouter` rather than guessing a model id. Pass `task='…'` to rank a provider-diverse shortlist for that job; ranking reads the catalog's own fields (reasoning support, context length, price, release date), so a model released today ranks correctly with no update here. A task mentioning cheap/fast/high-volume flips the ranking toward the cheap and free tiers; otherwise it leads with capable models. Show the user the shortlist with prices and let them choose — do not silently pick an expensive model on their behalf.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "refresh": {
+            "type": "boolean",
+            "default": true,
+            "description": "Fetch the live OpenRouter catalog (no auth needed). When false, only report the effort choices (no network)."
+          },
+          "task": {
+            "type": "string",
+            "minLength": 3,
+            "description": "Optional job to rank the live catalog for, such as 'debug a large Rust repository' or 'cheap high-volume summarizing'. Ranking uses the catalog's own data (reasoning support, context length, price, release date) rather than a hand-maintained list of model families."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 8,
+            "default": 5,
+            "description": "Maximum task-matched models to offer."
+          },
+          "interactive": {
+            "type": "boolean",
+            "default": true,
+            "description": "When a task is supplied, open a native model + effort picker if the MCP client supports form elicitation; otherwise return picker JSON."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_atlas_models",
+      "description": "RECOMMEND AND PICK an Atlas Cloud text model. When the user asks for the best Atlas model(s) for a job, pass that job as `task`; the tool ranks the live catalog and opens a native model + effort selection popup when the MCP client supports form elicitation, with a structured picker fallback otherwise. Returns the live catalog (no auth needed; free, no tokens charged) as a ready-to-render menu: task-ranked `recommendations`, `featured` (~8 curated models, HOT/NEW-tagged, one per provider), the full `menu` (each with model_id, label, cost_note like '$2/$6 per M', provider, tags, context length, latency), and `effort_choices` (quick/standard/deep). REACH FOR THIS the first time an Atlas model is wanted. If `selection.action` is `accept`, call `ask_atlas` with the selected model and effort; if native elicitation is unavailable, show `picker` with the host's selection UI. Read-only.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "refresh": {
+            "type": "boolean",
+            "default": true,
+            "description": "Fetch the live Atlas Cloud text-model catalog (no auth needed). When false, only report the effort choices (no network)."
+          },
+          "task": {
+            "type": "string",
+            "minLength": 3,
+            "description": "Optional job to rank the live Atlas catalog for, such as 'debug a large Rust repository' or 'cheap low-latency support chat'."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 8,
+            "default": 5,
+            "description": "Maximum task-matched models to offer."
+          },
+          "interactive": {
+            "type": "boolean",
+            "default": true,
+            "description": "When a task is supplied, open a native model + effort picker if the MCP client supports form elicitation; otherwise return picker JSON."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_ollama_models",
+      "description": "List the Ollama Cloud models available to put in the council, so you can offer the user a real, concrete choice instead of guessing. Returns the live ollama.com catalog (GLM, MiniMax-M3, Qwen, Kimi, DeepSeek, Nemotron, Mistral, gpt-oss, …) as daemon-ready ids, the models already pulled locally (certain to run right now), and the council that's currently configured. REACH FOR THIS the first time an Ollama council is wanted or when the user asks to configure ask_fable: call this, show the options, ask which they want, then persist the choice with `configure_ollama_council`. Read-only.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "refresh": {
+            "type": "boolean",
+            "default": true,
+            "description": "Fetch the live ollama.com catalog + locally-pulled models. When false, only report the currently-configured council (no network)."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "configure_ollama_council",
+      "description": "Save the user's chosen Ollama Cloud council so it sticks across sessions (written to ask_fable's config file, which overrides the ASK_FABLE_OLLAMA_* env defaults). Pass `models` as the list of cloud model ids to use for `ask_ollama_council` and the `full` tier (e.g. ['minimax-m3:cloud', 'glm-5.2:cloud', 'qwen3-coder:480b-cloud']; an 'ollama:' prefix is optional and a bare name like 'minimax-m3' is normalized to 'minimax-m3:cloud'). Optionally set `default_model` for the single-model `ask_ollama` tool. Confirm the selection with the user first — call `list_ollama_models` to ground it in what's actually available. Returns the saved config and its file path.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "models": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Ollama Cloud model ids for the council (e.g. ['minimax-m3:cloud','glm-5.2:cloud','qwen3-coder:480b-cloud']). An 'ollama:' prefix is optional; a bare name like 'minimax-m3' is normalized to 'minimax-m3:cloud'. This becomes ask_ollama_council's default and the `full` tier's Ollama members, persisted across sessions."
+          },
+          "default_model": {
+            "type": "string",
+            "description": "Optional: the single model `ask_ollama` uses when none is passed (e.g. 'gpt-oss:120b-cloud')."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "configure_atlas_council",
+      "description": "Save the user's chosen Atlas Cloud council (and optionally its adjudicator) so it sticks across sessions (written to ask_fable's config file, which overrides the ASK_FABLE_ATLAS_COUNCIL / ASK_FABLE_ATLAS_SYNTHESIZER env defaults). Pass `models` as the list of Atlas model ids `ask_atlas_council` should use by default (e.g. ['zai-org/glm-5.2','deepseek-ai/deepseek-v4-pro', 'moonshotai/kimi-k2']; an 'atlas:' prefix is optional). Optionally set `synthesizer` ('gpt' = the local GPT-5.6 Sol CLI, 'openai/gpt-5.6-sol' = the Atlas-hosted one, 'fable', …); omit it to keep the built-in ladder (local codex CLI → Atlas-hosted GPT-5.6 Sol → Fable). Confirm the selection with the user first — call `list_atlas_models` to ground it in the live catalog. Returns the saved config and its file path.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "models": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Atlas Cloud model ids for the council (e.g. ['zai-org/glm-5.2','deepseek-ai/deepseek-v4-pro','moonshotai/kimi-k2']). An 'atlas:' prefix is optional. This becomes ask_atlas_council's default, persisted across sessions. Ground the picks with list_atlas_models first."
+          },
+          "synthesizer": {
+            "type": "string",
+            "description": "Optional: the model ask_atlas_council uses to reconcile the panel (e.g. 'gpt' for the local GPT-5.6 Sol CLI, 'openai/gpt-5.6-sol' for the Atlas-hosted one, or 'fable'). Omit to keep the built-in ladder: local codex CLI → Atlas-hosted GPT-5.6 Sol → Fable."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "configure_tracing",
+      "description": "Toggle reasoning-trace capture at runtime, persisted across sessions (writes ask_fable's config file, which overrides the ASK_FABLE_TRACE_MODE / ASK_FABLE_STREAM_REASONING env defaults — no ~/.claude.json edit or restart needed; it applies on the next call). `trace_mode='full'` records redacted model reasoning into traces and trace bundles (and saves answer markdown); 'safe' withholds reasoning content while structural traces still record. `stream_reasoning=true|false` turns live thinking on the server console on or off. Pass either or both. Returns the effective settings and the config path.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "trace_mode": {
+            "type": "string",
+            "enum": [
+              "safe",
+              "full"
+            ],
+            "description": "'full' captures redacted model reasoning into traces and trace bundles (and saves answer markdown); 'safe' withholds reasoning content while structural traces still record. Persisted; overrides ASK_FABLE_TRACE_MODE. Takes effect on the next call — no restart."
+          },
+          "stream_reasoning": {
+            "type": "boolean",
+            "description": "Stream model thinking live to the ask_fable console as calls run (true) or off (false). Persisted; overrides ASK_FABLE_STREAM_REASONING. Streams to the server's own console, not into this tool result."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "context_write",
+      "description": "Store a chunk of context (code, file contents, a stack trace, design notes) under a stable `key` so you paste it ONCE and reuse it. Then pass `context_ref='<key>'` on `ask` to pull it in instead of re-pasting the same code into every call — the big lever against the re-paste tax, since the model can't see your repo. The store is shared by every agent on this server, so a sibling agent can `context_read` what you wrote. Reusing a key overwrites it. Give a one-line `description` so it shows usefully in `context_list`.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Stable key to store this context under (e.g. 'repo:auth', 'ticket-431/stacktrace'). Reusing a key overwrites it."
+          },
+          "value": {
+            "type": "string",
+            "description": "The context to store — code, file contents, a stack trace, design notes. Paste it ONCE here, then reference it by key via `context_ref` on `ask`."
+          },
+          "description": {
+            "type": "string",
+            "default": "",
+            "description": "Optional one-line note about what this holds (shown in context_list)."
+          }
+        },
+        "required": [
+          "key",
+          "value"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "context_pack",
+      "description": "Point, don't paste. The reasoning models can't see your repo, but THIS server runs locally next to it — so instead of hand-pasting code, NAME the files (and optional line ranges) you want and let the server read them, apply a character budget, and store the bundle on the context bus under `key`. Then pass `context_ref='<key>'` on `ask` / councils exactly as usual. Each spec is `path` or `path:START-END` (1-indexed inclusive), relative to the configured project root; reads never escape that root, and `.git/`/`.env*` are refused. Requires an operator-configured project root (config `project_root` or the `ASK_FABLE_PROJECT_ROOT` env var) — returns `not_configured` if unset. Over-budget or unreadable specs are reported in `skipped` with a reason and `complete:false`; nothing is silently truncated, and if nothing can be packed the store is left untouched.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "File specs to read from the configured project root — each a path relative to that root, optionally with a 1-indexed inclusive line range as `path:START-END` (e.g. 'src/app/db.py' or 'src/app/db.py:40-80')."
+          },
+          "key": {
+            "type": "string",
+            "description": "Stable key to store the packed bundle under; then pass context_ref='<key>' on `ask`. Reusing a key overwrites it."
+          },
+          "max_chars": {
+            "type": "integer",
+            "description": "Optional cap on total packed characters (default ~24000). Files that don't fit are reported in `skipped`, never silently truncated."
+          }
+        },
+        "required": [
+          "paths",
+          "key"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "context_read",
+      "description": "Read back context previously saved with `context_write`, by `key`. Returns the stored value plus its size, age, and description; `not_found` if the key isn't set. Use it to inspect a shared blob, or to consume context another agent wrote.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Key to read back."
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "context_list",
+      "description": "List what's in the shared context store — each key with its size, age, and description (never the full value). Read-only. Reach for this to discover what context is already available to reference via `context_ref` before re-pasting.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "context_delete",
+      "description": "Delete a stored context by `key` (housekeeping once a blob is no longer needed). Returns whether a row was removed.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Key to delete."
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "reset_session",
+      "description": "Dump (optionally to a file) and clear a Fable conversation session, so the next `ask` on that key starts a fresh topic.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "session": {
+            "type": "string",
+            "default": "default",
+            "description": "Session key to clear."
+          },
+          "model": {
+            "type": "string",
+            "enum": [
+              "fable",
+              "opus5",
+              "opus",
+              "opus-5",
+              "claude-opus-5"
+            ],
+            "default": "fable",
+            "description": "Which tool's conversation to clear: 'fable' for `ask`, 'opus5' (or 'opus') for `ask_opus5`. The two tools namespace their sessions separately, so the same key names two independent conversations."
+          },
+          "save": {
+            "type": "boolean",
+            "default": true,
+            "description": "Write the transcript to a file before clearing."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "stats",
+      "description": "Read-only usage/health stats aggregated from the ask_fable audit log — see how the tools are performing without spelunking JSONL. Buckets every recorded call over a time `window` ('1h' | '24h' | '7d' | 'all', default '24h') `by` 'model', 'session', or 'day', reporting calls / allowed / refused / errors, avg and p95 latency, and error_rate per bucket plus totals. Optional `model` / `session` filters narrow to one backend or workflow. Council/chain records also carry quorum, consensus, and synth_fallback in the log. Use it to answer things like 'is GLM erroring a lot today?' or 'how slow are councils this week?'. Makes no model call and is never cached.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "window": {
+            "type": "string",
+            "enum": [
+              "1h",
+              "24h",
+              "7d",
+              "all"
+            ],
+            "default": "24h",
+            "description": "How far back to aggregate: '1h', '24h', '7d', or 'all'."
+          },
+          "by": {
+            "type": "string",
+            "enum": [
+              "model",
+              "session",
+              "day",
+              "tool",
+              "provider",
+              "project",
+              "cache",
+              "mode"
+            ],
+            "default": "model",
+            "description": "Bucket key. 'model' attributes a call to the model that answered (a council to its synthesizer); 'provider' is per backend call — the only view that sees council/chain/debate members one by one, and what the circuit breaker shed (circuit_open); also 'tool', 'session', 'day', 'project', 'cache', 'mode'."
+          },
+          "model": {
+            "type": "string",
+            "description": "Only include records for this model label."
+          },
+          "session": {
+            "type": "string",
+            "description": "Only include records for this session key."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "trace_list",
+      "description": "List recent correlated tool traces without raw content.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20
+          },
+          "tool": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "session": {
+            "type": "string"
+          },
+          "project": {
+            "type": "string"
+          },
+          "before": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "trace_get",
+      "description": "Read the ordered events and artifact references for one trace.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "trace_id": {
+            "type": "string"
+          },
+          "include_content": {
+            "type": "boolean",
+            "default": false
+          },
+          "max_chars": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50000,
+            "default": 4000
+          }
+        },
+        "required": [
+          "trace_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "session_list",
+      "description": "COORDINATION — the operator dashboard. Lists ask_fable sessions across instances on this machine (opencode / Claude Code / salient windows) so you can see what other agents are asking the oracles. Each entry shows session key, agent_id, latest question, oracle, status, heartbeat age, and turn count. Defaults: THIS project only, and `active_only: true` (hide sessions with no heartbeat in ~5 min — the stale threshold). Pass `active_only: false` for retained history, `all_projects: true` for the whole machine. Use it to avoid duplicate work or watch the live fleet. Read-only, makes no model call. Visibility-only — never affects oracle answers; oracles only see what a calling agent explicitly passes in `question`/`context`.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "all_projects": {
+            "type": "boolean",
+            "default": false,
+            "description": "Show sessions from ALL projects on this machine, not just the current one."
+          },
+          "active_only": {
+            "type": "boolean",
+            "default": true,
+            "description": "Only sessions with a recent heartbeat (not stale). Default true so the dashboard shows live work. Pass false to include retained history."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200,
+            "default": 50
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "session_peek",
+      "description": "COORDINATION — read the full turn history (every question and answer, in order) for one session, across instances. Use it to understand what an agent has learned in a session before joining the work, or to recover a finding another instance produced. Optionally scope to one `agent_id`. Returns the complete conversation bounded by retention. Read-only, makes no model call. Like `session_list`, this is visibility-only — it never feeds back into an oracle's context.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "session_key": {
+            "type": "string",
+            "description": "The session label to inspect."
+          },
+          "agent_id": {
+            "type": "string",
+            "description": "Optional: restrict to one agent's turns on that session."
+          }
+        },
+        "required": [
+          "session_key"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "session_stats",
+      "description": "COORDINATION — aggregated oracle usage across ALL instances on this machine (unlike `stats`, which only sees the current instance's audit log). Turn counts (by status/oracle/agent) default to the last 24h (`window_s: 86400`); pass `window_s: 0` for all retained history. Also returns `fresh_sessions` (heartbeat within the stale window) vs `total_sessions`, plus `attributed_turns` / `unknown_turns`. Defaults to this project; `all_projects: true` for the whole machine. Use it to answer 'which agents are burning the most oracle calls?' or 'how is the fleet doing today?'. Read-only, makes no model call.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "all_projects": {
+            "type": "boolean",
+            "default": false,
+            "description": "Aggregate across all projects on this machine, not just the current one."
+          },
+          "window_s": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2592000,
+            "default": 86400,
+            "description": "Only count turns from the last N seconds. Default 86400 (24h). Pass 0 for all retained history."
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  ],
+  "version": "0.14.0"
+}
