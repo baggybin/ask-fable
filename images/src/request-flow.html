@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>ask-fable request flow</title>
+  <style>
+    :root {
+      --bg: #050b14;
+      --ink: #f2f6fb;
+      --muted: #93a7bd;
+      --cyan: #5ce1f5;
+      --purple: #b49cff;
+      --gold: #e8b86d;
+      --green: #5ee2b5;
+      --red: #f07178;
+      --card: rgba(10, 20, 34, 0.96);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 1672px;
+      height: 941px;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Noto Sans", "Adwaita Sans", sans-serif;
+    }
+    body {
+      background-image: radial-gradient(rgba(110, 160, 200, 0.16) 1px, transparent 1px);
+      background-size: 18px 18px;
+      padding: 56px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .sky {
+      height: 72px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1.15fr 1.45fr 1.05fr 1fr 1.05fr;
+      column-gap: 18px;
+      align-items: end;
+      padding: 0 8px;
+    }
+    .hit {
+      grid-column: 4 / 9;
+      justify-self: stretch;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+    .hit-badge {
+      border: 1.5px solid rgba(94, 226, 181, 0.7);
+      color: var(--green);
+      background: rgba(10, 28, 24, 0.9);
+      border-radius: 12px;
+      padding: 8px 14px;
+      font-weight: 700;
+      font-size: 16px;
+      white-space: nowrap;
+    }
+    .hit-line {
+      flex: 1;
+      height: 0;
+      border-top: 2px solid rgba(94, 226, 181, 0.55);
+      position: relative;
+    }
+    .hit-line::after {
+      content: "▶";
+      position: absolute;
+      right: -2px;
+      top: -11px;
+      color: var(--green);
+      font-size: 12px;
+    }
+    .row {
+      flex: 0 0 auto;
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1.15fr 1.45fr 1.05fr 1fr 1.05fr;
+      column-gap: 18px;
+      align-items: stretch;
+      padding: 0 8px;
+    }
+    .step {
+      background: var(--card);
+      border-radius: 18px;
+      border: 1.5px solid;
+      padding: 20px 12px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      min-width: 0;
+      min-height: 300px;
+    }
+    .step:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      right: -16px;
+      top: 46%;
+      color: #6f879e;
+      font-size: 20px;
+    }
+    .n {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1.5px solid currentColor;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .step svg.icon { width: 34px; height: 34px; margin-bottom: 12px; }
+    .name {
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+    .s1, .s2 { color: var(--cyan); border-color: rgba(92, 225, 245, 0.5); }
+    .s3 { color: var(--purple); border-color: rgba(180, 156, 255, 0.55); }
+    .s4 { color: #9bb7ff; border-color: rgba(155, 183, 255, 0.5); }
+    .s4::before {
+      content: "";
+      position: absolute;
+      top: -24px;
+      left: 50%;
+      height: 24px;
+      border-left: 2px dashed rgba(94, 226, 181, 0.55);
+    }
+    .s5 { color: var(--purple); border-color: rgba(180, 156, 255, 0.6); }
+    .s6 { color: #5fd0c8; border-color: rgba(95, 208, 200, 0.55); }
+    .s7 { color: var(--gold); border-color: rgba(232, 184, 109, 0.55); }
+    .s8 { color: var(--green); border-color: rgba(94, 226, 181, 0.6); }
+    .modes {
+      margin-top: 12px;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .mode {
+      border: 1px solid rgba(180, 156, 255, 0.4);
+      border-radius: 8px;
+      padding: 5px 4px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .bits {
+      margin-top: 12px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .bit {
+      border: 1px solid rgba(95, 208, 200, 0.4);
+      border-radius: 8px;
+      padding: 6px 8px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .tid {
+      margin-top: 12px;
+      border: 1px solid rgba(94, 226, 181, 0.4);
+      border-radius: 8px;
+      padding: 5px 8px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: "Adwaita Mono", "Liberation Mono", monospace;
+    }
+    .ground {
+      height: 96px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1.15fr 1.45fr 1.05fr 1fr 1.05fr;
+      column-gap: 18px;
+      padding: 0 8px;
+    }
+    .blocked-wrap {
+      grid-column: 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .blocked-stem {
+      width: 0;
+      height: 18px;
+      border-left: 2px dashed rgba(240, 113, 120, 0.7);
+    }
+    .blocked {
+      border: 1.5px dashed rgba(240, 113, 120, 0.75);
+      color: var(--red);
+      border-radius: 12px;
+      padding: 8px 14px;
+      font-weight: 700;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="sky">
+    <div class="hit">
+      <div class="hit-badge">✓ cache hit</div>
+      <div class="hit-line"></div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="step s1">
+      <div class="n">1</div>
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 12h10"/><path d="m10 8 4 4-4 4"/><rect x="16" y="6" width="5" height="12" rx="1"/></svg>
+      <div class="name">Receive</div>
+    </div>
+    <div class="step s2">
+      <div class="n">2</div>
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M8 4h7l4 4v12H8z"/><path d="M15 4v4h4"/><circle cx="12" cy="14" r="2.4"/><path d="m14 16 2 2"/></svg>
+      <div class="name">Resolve<br>context</div>
+    </div>
+    <div class="step s3">
+      <div class="n">3</div>
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 3 5 6.5v5.2c0 4.3 2.9 7.4 7 8.8 4.1-1.4 7-4.5 7-8.8V6.5L12 3z"/><path d="m9 12 2 2 4-4"/></svg>
+      <div class="name">Guard</div>
+    </div>
+    <div class="step s4">
+      <div class="n">4</div>
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><ellipse cx="12" cy="7" rx="7" ry="3"/><path d="M5 7v6c0 1.7 3.1 3 7 3s7-1.3 7-3V7"/><circle cx="16.5" cy="16.5" r="3"/><path d="m18.6 18.6 1.7 1.7"/></svg>
+      <div class="name">Cache<br>lookup</div>
+    </div>
+    <div class="step s5">
+      <div class="n">5</div>
+      <div class="name">Run mode</div>
+      <div class="modes">
+        <div class="mode">Ask</div>
+        <div class="mode">Council</div>
+        <div class="mode">Chain</div>
+        <div class="mode">Debate</div>
+        <div class="mode">Falsify</div>
+        <div class="mode">Conference</div>
+      </div>
+    </div>
+    <div class="step s6">
+      <div class="n">6</div>
+      <div class="name">Normalize</div>
+      <div class="bits">
+        <div class="bit">answer</div>
+        <div class="bit">sidecar</div>
+      </div>
+    </div>
+    <div class="step s7">
+      <div class="n">7</div>
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M12 9v11M9 17l3 3 3-3"/></svg>
+      <div class="name">Persist</div>
+    </div>
+    <div class="step s8">
+      <div class="n">8</div>
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12 20 4l-7 16-2-7z"/></svg>
+      <div class="name">Return</div>
+      <div class="tid">trace_id</div>
+    </div>
+  </div>
+  <div class="ground">
+    <div></div><div></div>
+    <div class="blocked-wrap">
+      <div class="blocked-stem"></div>
+      <div class="blocked">✕ blocked</div>
+    </div>
+  </div>
+</body>
+</html>

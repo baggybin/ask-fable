@@ -1,0 +1,12 @@
+[
+  {
+    "session": "arena-dict-order",
+    "question": "Is CPython dict iteration order guaranteed by the language spec?",
+    "context": "What's New in Python 3.7: the insertion-order preservation nature of dict objects has been declared to be an official part of the Python language spec."
+  },
+  {
+    "session": "arena-idempotency",
+    "question": "Are the API's order-creation writes idempotent?",
+    "context": "API spec section 4.2: POST /orders creates a new order on every call and is NOT idempotent; clients must send an Idempotency-Key header to deduplicate retries."
+  }
+]

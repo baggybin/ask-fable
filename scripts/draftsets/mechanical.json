@@ -1,0 +1,114 @@
+[
+  {
+    "label": "retry/cap-30",
+    "seeded": true,
+    "question": "What are the retry limits?",
+    "context": "def retry(fn, attempts=3):\n    CAP_SECONDS = 5\n    delay = 1\n    for _ in range(attempts):\n        try:\n            return fn()\n        except TransientError:\n            time.sleep(min(delay, CAP_SECONDS))\n            delay *= 2\n",
+    "answer": "The ceiling on any single sleep is CAP_SECONDS, which is set to 30.",
+    "reviewer": "minimax"
+  },
+  {
+    "label": "retry/delay-5",
+    "seeded": true,
+    "question": "What are the retry limits?",
+    "context": "def retry(fn, attempts=3):\n    CAP_SECONDS = 5\n    delay = 1\n    for _ in range(attempts):\n        try:\n            return fn()\n        except TransientError:\n            time.sleep(min(delay, CAP_SECONDS))\n            delay *= 2\n",
+    "answer": "The initial value of `delay` is 5, and it doubles on each failure.",
+    "reviewer": "minimax"
+  },
+  {
+    "label": "retry/clean",
+    "seeded": false,
+    "question": "What are the retry limits?",
+    "context": "def retry(fn, attempts=3):\n    CAP_SECONDS = 5\n    delay = 1\n    for _ in range(attempts):\n        try:\n            return fn()\n        except TransientError:\n            time.sleep(min(delay, CAP_SECONDS))\n            delay *= 2\n",
+    "answer": "CAP_SECONDS is 5. The initial value of `delay` is 1, and `delay` is doubled after each caught TransientError.",
+    "reviewer": "minimax"
+  },
+  {
+    "label": "config/parallel-12",
+    "seeded": true,
+    "question": "What do the limits default to?",
+    "context": "DEFAULT_TIMEOUT = 240\nMAX_PARALLEL = 6\nRETRY_STATUSES = (429, 500, 502, 503, 504)\nCOUNCIL_TIMEOUT = DEFAULT_TIMEOUT + 120\n",
+    "answer": "MAX_PARALLEL defaults to 12 and DEFAULT_TIMEOUT defaults to 240.",
+    "reviewer": "minimax"
+  },
+  {
+    "label": "config/retries-408",
+    "seeded": true,
+    "question": "Which statuses are retried?",
+    "context": "DEFAULT_TIMEOUT = 240\nMAX_PARALLEL = 6\nRETRY_STATUSES = (429, 500, 502, 503, 504)\nCOUNCIL_TIMEOUT = DEFAULT_TIMEOUT + 120\n",
+    "answer": "RETRY_STATUSES contains 408, 429, 500, 502, 503 and 504.",
+    "reviewer": "minimax"
+  },
+  {
+    "label": "config/clean-values",
+    "seeded": false,
+    "question": "What do the limits default to?",
+    "context": "DEFAULT_TIMEOUT = 240\nMAX_PARALLEL = 6\nRETRY_STATUSES = (429, 500, 502, 503, 504)\nCOUNCIL_TIMEOUT = DEFAULT_TIMEOUT + 120\n",
+    "answer": "DEFAULT_TIMEOUT is 240 and MAX_PARALLEL is 6.",
+    "reviewer": "minimax"
+  },
+  {
+    "label": "config/clean-statuses",
+    "seeded": false,
+    "question": "Which statuses are retried?",
+    "context": "DEFAULT_TIMEOUT = 240\nMAX_PARALLEL = 6\nRETRY_STATUSES = (429, 500, 502, 503, 504)\nCOUNCIL_TIMEOUT = DEFAULT_TIMEOUT + 120\n",
+    "answer": "RETRY_STATUSES is the tuple (429, 500, 502, 503, 504) \u2014 five values.",
+    "reviewer": "minimax"
+  },
+  {
+    "label": "cache/v4",
+    "seeded": true,
+    "question": "How is the cache key built?",
+    "context": "KEY_VERSION = 5\nTTL_SECONDS = 3600\n\ndef key(tool, models, question):\n    blob = f\"{tool}|{models}|{question}\"\n    h = hashlib.sha256(blob.encode())\n    return f\"v{KEY_VERSION}:{h.hexdigest()[:32]}\"\n",
+    "answer": "KEY_VERSION is 4, so keys are prefixed `v4:`.",
+    "reviewer": "minimax"
+  },
+  {
+    "label": "cache/ttl-600",
+    "seeded": true,
+    "question": "How long do entries live?",
+    "context": "KEY_VERSION = 5\nTTL_SECONDS = 3600\n\ndef key(tool, models, question):\n    blob = f\"{tool}|{models}|{question}\"\n    h = hashlib.sha256(blob.encode())\n    return f\"v{KEY_VERSION}:{h.hexdigest()[:32]}\"\n",
+    "answer": "TTL_SECONDS is 600.",
+    "reviewer": "minimax"
+  },
+  {
+    "label": "cache/clean",
+    "seeded": false,
+    "question": "How is the cache key built?",
+    "context": "KEY_VERSION = 5\nTTL_SECONDS = 3600\n\ndef key(tool, models, question):\n    blob = f\"{tool}|{models}|{question}\"\n    h = hashlib.sha256(blob.encode())\n    return f\"v{KEY_VERSION}:{h.hexdigest()[:32]}\"\n",
+    "answer": "KEY_VERSION is 5, so the key is prefixed `v5:`, and the sha256 hexdigest is truncated to its first 32 characters.",
+    "reviewer": "minimax"
+  },
+  {
+    "label": "chunk/overlap-128",
+    "seeded": true,
+    "question": "What are the chunking defaults?",
+    "context": "def chunk(text, size=512, overlap=64):\n    if size <= overlap:\n        raise ValueError(\"size must exceed overlap\")\n    step = size - overlap\n    return [text[i:i + size] for i in range(0, len(text), step)]\n",
+    "answer": "`size` defaults to 512 and `overlap` defaults to 128.",
+    "reviewer": "minimax"
+  },
+  {
+    "label": "chunk/clean",
+    "seeded": false,
+    "question": "What are the chunking defaults?",
+    "context": "def chunk(text, size=512, overlap=64):\n    if size <= overlap:\n        raise ValueError(\"size must exceed overlap\")\n    step = size - overlap\n    return [text[i:i + size] for i in range(0, len(text), step)]\n",
+    "answer": "`size` defaults to 512 and `overlap` defaults to 64, so `step` is 448. A ValueError is raised when `size <= overlap`.",
+    "reviewer": "minimax"
+  },
+  {
+    "label": "status/has-timeout",
+    "seeded": true,
+    "question": "What statuses exist?",
+    "context": "STATUSES = (\"ok\", \"refused\", \"error\", \"cancelled\")\n\ndef is_terminal(s):\n    return s in STATUSES\n",
+    "answer": "STATUSES has five members: ok, refused, error, cancelled and timeout.",
+    "reviewer": "minimax"
+  },
+  {
+    "label": "status/clean",
+    "seeded": false,
+    "question": "What statuses exist?",
+    "context": "STATUSES = (\"ok\", \"refused\", \"error\", \"cancelled\")\n\ndef is_terminal(s):\n    return s in STATUSES\n",
+    "answer": "STATUSES has four members: ok, refused, error and cancelled.",
+    "reviewer": "minimax"
+  }
+]

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>ask-fable guard layers</title>
+  <style>
+    :root {
+      --bg: #050b14;
+      --card: #0a1422;
+      --ink: #f2f6fb;
+      --muted: #93a7bd;
+      --cyan: #5ce1f5;
+      --amber: #e8b86d;
+      --green: #5ee2b5;
+      --line: rgba(148, 174, 196, 0.28);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 1672px;
+      height: 941px;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Noto Sans", "Adwaita Sans", sans-serif;
+    }
+    body {
+      background-image: radial-gradient(rgba(110, 160, 200, 0.16) 1px, transparent 1px);
+      background-size: 18px 18px;
+      padding: 40px 56px 28px;
+      display: flex;
+      flex-direction: column;
+    }
+    header { text-align: center; margin-bottom: 28px; }
+    h1 {
+      font-size: 42px;
+      font-weight: 700;
+      letter-spacing: -0.6px;
+      line-height: 1.15;
+    }
+    h1 span { color: var(--cyan); }
+    .lede {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 20px;
+      line-height: 1.45;
+    }
+    .row {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 36px 1fr 36px 1fr;
+      align-items: stretch;
+      gap: 0;
+    }
+    .card {
+      background: linear-gradient(180deg, rgba(16, 28, 46, 0.96), rgba(8, 16, 28, 0.96));
+      border: 1.5px solid var(--line);
+      border-radius: 22px;
+      padding: 26px 28px 22px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 18px 40px rgba(0,0,0,0.35);
+    }
+    .card.l1 { border-color: rgba(92, 225, 245, 0.55); box-shadow: 0 0 32px rgba(92, 225, 245, 0.08); }
+    .card.l2 { border-color: rgba(232, 184, 109, 0.55); box-shadow: 0 0 32px rgba(232, 184, 109, 0.08); }
+    .card.l3 { border-color: rgba(94, 226, 181, 0.55); box-shadow: 0 0 32px rgba(94, 226, 181, 0.08); }
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .num {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 20px;
+    }
+    .l1 .num { background: rgba(92, 225, 245, 0.15); color: var(--cyan); border: 1px solid rgba(92, 225, 245, 0.45); }
+    .l2 .num { background: rgba(232, 184, 109, 0.15); color: var(--amber); border: 1px solid rgba(232, 184, 109, 0.45); }
+    .l3 .num { background: rgba(94, 226, 181, 0.15); color: var(--green); border: 1px solid rgba(94, 226, 181, 0.45); }
+    .badge {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid;
+    }
+    .l1 .badge { color: var(--cyan); border-color: rgba(92, 225, 245, 0.4); }
+    .l2 .badge { color: var(--amber); border-color: rgba(232, 184, 109, 0.4); }
+    .l3 .badge { color: var(--green); border-color: rgba(94, 226, 181, 0.4); }
+    h2 {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      letter-spacing: -0.3px;
+    }
+    .l1 h2 { color: var(--cyan); }
+    .l2 h2 { color: var(--amber); }
+    .l3 h2 { color: var(--green); }
+    ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      color: #d5e2ef;
+      font-size: 19px;
+      line-height: 1.45;
+      flex: 1;
+    }
+    li {
+      padding-left: 18px;
+      position: relative;
+    }
+    li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.55em;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.7;
+    }
+    .arrow {
+      display: grid;
+      place-items: center;
+      color: #6f879e;
+      font-size: 28px;
+    }
+    .fail {
+      margin-top: 22px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(148, 174, 196, 0.18);
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.4;
+    }
+    footer {
+      margin-top: 22px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 16px;
+    }
+    code {
+      font-family: "Adwaita Mono", "Liberation Mono", monospace;
+      font-size: 0.92em;
+      color: #dbe7f3;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>The guard — <span>three layers</span></h1>
+    <p class="lede">Layers 1–2 run locally before any model call. Layer 3 is Fable’s system prompt at inference.</p>
+  </header>
+  <div class="row">
+    <article class="card l1">
+      <div class="top"><div class="num">1</div><div class="badge">PRE-CALL</div></div>
+      <h2>Sanity floor</h2>
+      <ul>
+        <li>Rejects empty, too-short (&lt;3 chars), or too-long (&gt;65536 chars) questions.</li>
+        <li>Context is unbounded; any cap is floored to 512,000 chars.</li>
+        <li>Breadth is allowed — this is a size check, not a topic filter.</li>
+      </ul>
+      <p class="fail">On fail: return refused. No model call.</p>
+    </article>
+    <div class="arrow">→</div>
+    <article class="card l2">
+      <div class="top"><div class="num">2</div><div class="badge">PRE-CALL</div></div>
+      <h2>Prohibited-use denylist</h2>
+      <ul>
+        <li>Bundled offensive-security and biology dual-use patterns.</li>
+        <li>Extend with <code>ASK_FABLE_DENYLIST_FILE</code> (one term per line).</li>
+        <li>Allowlist phrases (e.g. <code>request&nbsp;payload</code>) neutralize false trips.</li>
+      </ul>
+      <p class="fail">On fail: return refused. No model call.</p>
+    </article>
+    <div class="arrow">→</div>
+    <article class="card l3">
+      <div class="top"><div class="num">3</div><div class="badge">AT INFERENCE</div></div>
+      <h2>Model scope contract</h2>
+      <ul>
+        <li>Fable’s system prompt: engineering questions are in scope, including conceptual ones.</li>
+        <li>Replies <code>REFUSED: &lt;reason&gt;</code> only for direct offensive-security asks or non-software domains.</li>
+        <li>Questions about security-related code are normal engineering.</li>
+      </ul>
+      <p class="fail">On fail: the model replies <code>REFUSED: &lt;reason&gt;</code>.</p>
+    </article>
+  </div>
+  <footer>Owner-only JSONL audit log · question hashed by default · <code>ASK_FABLE_AUDIT_RAW=1</code> stores raw</footer>
+</body>
+</html>

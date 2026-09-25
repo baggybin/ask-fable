@@ -1,0 +1,14 @@
+graph TD
+    Start["def ask_council(Q, models):"] --> Setup["promises = []<br>for model in models:<br>  promises.push(call_oracle(model, Q))"]
+    Setup --> Wait["responses = await gather(*promises)"]
+    Wait --> Filter["valid_resps = [r for r in responses if r.ok]"]
+    Filter --> CheckQ{"len(valid_resps) == 0?"}
+    CheckQ -- Yes --> RetErr["return Error('all models failed')"]
+    CheckQ -- No --> Anonymize["anon_resps = anonymize(valid_resps)<br>Expert A: ..., Expert B: ..."]
+    Anonymize --> Synthesize["synth_prompt = build_synth_prompt(anon_resps)<br>final_answer = call_claude(synth_prompt)"]
+    Synthesize --> Consensus["consensus_level = compute_consensus(valid_resps)<br>e.g., strong, partial, divergent"]
+    Consensus --> Save["save_to_cache(hash, final_answer)"]
+    Save --> Ret["return final_answer, sources=valid_resps, consensus=consensus_level"]
+
+    classDef func fill:#f9f,stroke:#333,stroke-width:2px;
+    class Start func;

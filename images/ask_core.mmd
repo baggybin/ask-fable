@@ -1,0 +1,21 @@
+graph TD
+    Start["def ask(Q, context, context_ref):"] --> DB["Load context_ref from SQLite DB"]
+    DB --> Missing{"Missing Keys?"}
+    Missing -- Yes --> RetNeedsCtx["return needs_context, did_you_mean"]
+    Missing -- No --> Guard["status = check_guard(Q + Context)"]
+    Guard --> IsGuarded{"status == passed?"}
+    IsGuarded -- No --> RetRefused["return REFUSED"]
+    IsGuarded -- Yes --> Cache["cached = check_cache(hash(Q+Context))"]
+    Cache --> IsCached{"cached?"}
+    IsCached -- Yes --> RetCached["return cached_answer"]
+    IsCached -- No --> Call["resp = call_claude(Q + Context)"]
+    Call --> Parse["sidecar = extract_json(resp)"]
+    Parse --> NeedsMore{"sidecar.needs_context?"}
+    NeedsMore -- Yes --> LoopCount{"loops > max_needs_context?"}
+    LoopCount -- Yes --> Exhausted["return context_exhausted"]
+    LoopCount -- No --> ReturnFollowUp["return followup, prompt_user_to_paste"]
+    NeedsMore -- No --> Save["save_to_cache(hash, resp)"]
+    Save --> ReturnFinal["return answer, sidecar"]
+    
+    classDef func fill:#f9f,stroke:#333,stroke-width:2px;
+    class Start func;

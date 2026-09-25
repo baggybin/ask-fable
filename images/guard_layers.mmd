@@ -1,0 +1,12 @@
+graph TD
+    Start["def check_guard(prompt):"] --> Floor["if len(prompt) < 3 or len(prompt) > 65536:<br>  return false"]
+    Floor --> Allow["masked = mask_allowlist(prompt, ALLOWLIST)"]
+    Allow --> Deny["if contains_offensive_markers(masked, DENYLIST):<br>  return false"]
+    Deny --> Unmask["unmasked = restore_allowlist(masked)"]
+    Unmask --> Contract["is_code = ask_fable_fast('Is this software eng?', unmasked)"]
+    Contract --> CheckContract{"is_code?"}
+    CheckContract -- No --> Refused["return REFUSED"]
+    CheckContract -- Yes --> Passed["return PASSED"]
+
+    classDef func fill:#f9f,stroke:#333,stroke-width:2px;
+    class Start func;
